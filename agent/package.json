@@ -1,0 +1,17 @@
+{
+  "name": "@dispatch-agent/agent",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@aws-lambda-powertools/logger": "^1.17.0",
+    "@dispatch-agent/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.131",
+    "typescript": "^5.3.3"
+  }
+}

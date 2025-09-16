@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(CDK_DEFAULT_REGION=us-east-1 npx cdk destroy --force)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
