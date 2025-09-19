@@ -2,3 +2,4 @@ packages:
   - 'types'
   - 'agent'
   - 'infra'
+  - 'mcp/session'

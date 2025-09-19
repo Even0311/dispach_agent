@@ -1,5 +1,11 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { AssistRequest, AssistResponse } from '@dispatch-agent/types';
+import { DispatchAgent } from './agent';
+import { MCPSessionClient } from './mcp-client';
+
+// Initialize the MCP client and agent
+const mcpClient = new MCPSessionClient();
+const agent = new DispatchAgent(mcpClient);
 
 export const handler = async (
   event: APIGatewayProxyEvent
@@ -35,9 +41,11 @@ export const handler = async (
 
     console.info('Processing assist request', { callSid: request.callSid });
 
-    // Mock response for now
+    // Process the request through the LangGraph agent
+    const reply = await agent.processRequest(request);
+
     const response: AssistResponse = {
-      reply: 'Hello, this is a mock reply'
+      reply,
     };
 
     return {

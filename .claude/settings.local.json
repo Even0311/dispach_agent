@@ -1,7 +1,20 @@
 {
   "permissions": {
     "allow": [
-      "Bash(CDK_DEFAULT_REGION=us-east-1 npx cdk destroy --force)"
+      "Bash(CDK_DEFAULT_REGION=us-east-1 npx cdk destroy --force)",
+      "Bash(pnpm build:*)",
+      "Bash(npm install:*)",
+      "Bash(CDK_DEFAULT_REGION=ap-southeast-2 npx cdk deploy TelephonyInfraStack --app \"node bin/minimal-app.js\" --require-approval never)",
+      "Bash(CDK_DEFAULT_REGION=ap-southeast-2 npx cdk deploy TelephonyLambdasStack --app \"node bin/minimal-app.js\" --require-approval never)",
+      "Bash(npm run build:*)",
+      "Bash(CDK_DEFAULT_REGION=ap-southeast-2 npx cdk destroy TelephonyLambdasStack --app \"node bin/minimal-app.js\" --force)",
+      "Bash(npm run seed:*)",
+      "Bash(npx tsc:*)",
+      "Bash(find:*)",
+      "Bash(git checkout:*)",
+      "Bash(node:*)",
+      "Bash(CDK_DEFAULT_REGION=ap-southeast-2 npx cdk deploy TelephonyLambdasStack --app \"node bin/minimal-app.js\" --require-approval never --force)",
+      "Bash(aws cloudformation describe-stacks:*)"
     ],
     "deny": [],
     "ask": []

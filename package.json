@@ -5,7 +5,8 @@
   "scripts": {
     "build": "pnpm -r build",
     "dev": "pnpm -r dev",
-    "deploy": "pnpm --filter infra deploy"
+    "deploy": "pnpm --filter infra deploy",
+    "destroy": "pnpm --filter infra destroy"
   },
   "devDependencies": {
     "typescript": "^5.3.3",
