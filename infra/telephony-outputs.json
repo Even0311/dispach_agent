@@ -1,0 +1,10 @@
+{
+  "TelephonyInfraStack": {
+    "PrivateSubnetIds": "subnet-0fe5a8f4b1b666f2f,subnet-03bb8029b5c858504",
+    "RedisEndpoint": "telephony-redis.mozf4h.ng.0001.apse2.cache.amazonaws.com",
+    "VpcId": "vpc-006b1cc02db77de85",
+    "S3BucketName": "telephony-storage-997575969210-ap-southeast-2",
+    "DynamoDBTableNames": "{\"users\":\"Telephony-Users\",\"companies\":\"Telephony-Companies\",\"services\":\"Telephony-Services\",\"callLogs\":\"Telephony-CallLogs\",\"transcripts\":\"Telephony-Transcripts\",\"transcriptChunks\":\"Telephony-TranscriptChunks\",\"serviceBookings\":\"Telephony-ServiceBookings\"}",
+    "LambdaSecurityGroupId": "sg-0b05952cbf3c11c71"
+  }
+}
