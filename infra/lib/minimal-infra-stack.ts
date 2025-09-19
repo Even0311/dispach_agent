@@ -1,22 +1,17 @@
 import * as cdk from 'aws-cdk-lib';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as elasticache from 'aws-cdk-lib/aws-elasticache';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import * as ecs from 'aws-cdk-lib/aws-ecs';
-import * as ecsPatterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
-import * as path from 'path';
 
-export class DispatchAgentStack extends cdk.Stack {
+export class MinimalInfraStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // Create VPC for Redis, ECS and Lambda
-    const vpc = new ec2.Vpc(this, 'DispatchAgentVpc', {
-      maxAzs: 3,
+    // Create VPC for Lambda functions and Redis
+    const vpc = new ec2.Vpc(this, 'MinimalVpc', {
+      maxAzs: 2, // Reduce to 2 AZ for cost optimization
       natGateways: 1,
       subnetConfiguration: [
         {
@@ -37,7 +32,7 @@ export class DispatchAgentStack extends cdk.Stack {
       ],
     });
 
-    // Add VPC Gateway Endpoints for DynamoDB and S3
+    // Add VPC Gateway Endpoints for cost optimization
     vpc.addGatewayEndpoint('DynamoDBEndpoint', {
       service: ec2.GatewayVpcEndpointAwsService.DYNAMODB,
       subnets: [{ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }],
@@ -55,18 +50,18 @@ export class DispatchAgentStack extends cdk.Stack {
       allowAllOutbound: false,
     });
 
-    // Security group for applications (ECS, Lambda)
-    const appSecurityGroup = new ec2.SecurityGroup(this, 'AppSecurityGroup', {
+    // Security group for Lambda functions
+    const lambdaSecurityGroup = new ec2.SecurityGroup(this, 'LambdaSecurityGroup', {
       vpc,
-      description: 'Security group for applications (ECS tasks, Lambda functions)',
+      description: 'Security group for Lambda functions',
       allowAllOutbound: true,
     });
 
-    // Allow applications to connect to Redis
+    // Allow Lambda to connect to Redis
     redisSecurityGroup.addIngressRule(
-      appSecurityGroup,
+      lambdaSecurityGroup,
       ec2.Port.tcp(6379),
-      'Allow applications to connect to Redis'
+      'Allow Lambda functions to connect to Redis'
     );
 
     // Redis Subnet Group (use isolated subnets for database layer)
@@ -75,27 +70,27 @@ export class DispatchAgentStack extends cdk.Stack {
       subnetIds: vpc.isolatedSubnets.map(subnet => subnet.subnetId),
     });
 
-    // Redis ElastiCache Cluster
+    // Redis ElastiCache Cluster (minimal configuration)
     const redisCluster = new elasticache.CfnReplicationGroup(this, 'RedisCluster', {
-      replicationGroupDescription: 'Redis cluster for session storage',
-      replicationGroupId: 'dispatch-agent-redis',
+      replicationGroupDescription: 'Redis cluster for telephony sessions',
+      replicationGroupId: 'telephony-redis',
       numCacheClusters: 1,
-      cacheNodeType: 'cache.t3.micro',
+      cacheNodeType: 'cache.t3.micro', // Smallest instance for development
       engine: 'redis',
       engineVersion: '7.0',
       port: 6379,
       cacheSubnetGroupName: redisSubnetGroup.ref,
       securityGroupIds: [redisSecurityGroup.securityGroupId],
       atRestEncryptionEnabled: true,
-      transitEncryptionEnabled: false, // Simplify for now
+      transitEncryptionEnabled: false, // Simplify for VPC internal access
       automaticFailoverEnabled: false, // Single node cluster
     });
 
     redisCluster.addDependency(redisSubnetGroup);
 
-    // DynamoDB Tables
+    // DynamoDB Tables - exactly what your telephony lambdas need
     const usersTable = new dynamodb.Table(this, 'UsersTable', {
-      tableName: 'DispatchAgent-Users',
+      tableName: 'Telephony-Users',
       partitionKey: { name: '_id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY, // For development
@@ -107,7 +102,7 @@ export class DispatchAgentStack extends cdk.Stack {
     });
 
     const companiesTable = new dynamodb.Table(this, 'CompaniesTable', {
-      tableName: 'DispatchAgent-Companies',
+      tableName: 'Telephony-Companies',
       partitionKey: { name: '_id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -119,7 +114,7 @@ export class DispatchAgentStack extends cdk.Stack {
     });
 
     const servicesTable = new dynamodb.Table(this, 'ServicesTable', {
-      tableName: 'DispatchAgent-Services',
+      tableName: 'Telephony-Services',
       partitionKey: { name: '_id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -131,7 +126,7 @@ export class DispatchAgentStack extends cdk.Stack {
     });
 
     const callLogsTable = new dynamodb.Table(this, 'CallLogsTable', {
-      tableName: 'DispatchAgent-CallLogs',
+      tableName: 'Telephony-CallLogs',
       partitionKey: { name: '_id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -148,7 +143,7 @@ export class DispatchAgentStack extends cdk.Stack {
     });
 
     const transcriptsTable = new dynamodb.Table(this, 'TranscriptsTable', {
-      tableName: 'DispatchAgent-Transcripts',
+      tableName: 'Telephony-Transcripts',
       partitionKey: { name: '_id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -160,7 +155,7 @@ export class DispatchAgentStack extends cdk.Stack {
     });
 
     const transcriptChunksTable = new dynamodb.Table(this, 'TranscriptChunksTable', {
-      tableName: 'DispatchAgent-TranscriptChunks',
+      tableName: 'Telephony-TranscriptChunks',
       partitionKey: { name: '_id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -172,7 +167,7 @@ export class DispatchAgentStack extends cdk.Stack {
     });
 
     const serviceBookingsTable = new dynamodb.Table(this, 'ServiceBookingsTable', {
-      tableName: 'DispatchAgent-ServiceBookings',
+      tableName: 'Telephony-ServiceBookings',
       partitionKey: { name: '_id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -188,16 +183,16 @@ export class DispatchAgentStack extends cdk.Stack {
       partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
     });
 
-    // S3 Bucket for file storage
-    const storageBucket = new s3.Bucket(this, 'StorageBucket', {
-      bucketName: `dispatch-agent-storage-${this.account}-${this.region}`,
-      versioned: true,
+    // S3 Bucket for call recordings and data
+    const storageBucket = new s3.Bucket(this, 'TelephonyBucket', {
+      bucketName: `telephony-storage-${this.account}-${this.region}`,
+      versioned: false, // Simplify for development
       encryption: s3.BucketEncryption.S3_MANAGED,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: cdk.RemovalPolicy.DESTROY, // For development
       lifecycleRules: [
         {
-          id: 'AudioRecordings',
+          id: 'CallRecordings',
           prefix: 'recordings/',
           transitions: [
             {
@@ -213,152 +208,37 @@ export class DispatchAgentStack extends cdk.Stack {
       ],
     });
 
-    // ECS Cluster
-    const cluster = new ecs.Cluster(this, 'McpSessionCluster', {
-      vpc,
-    });
-
-    // ECS Task Definition for MCP Session Server
-    const mcpTaskDefinition = new ecs.FargateTaskDefinition(this, 'McpSessionTaskDef', {
-      memoryLimitMiB: 512,
-      cpu: 256,
-    });
-
-    // Add container to task definition
-    const mcpContainer = mcpTaskDefinition.addContainer('McpSessionContainer', {
-      image: ecs.ContainerImage.fromAsset(path.join(__dirname, '../../mcp/session')),
-      environment: {
-        NODE_ENV: 'production',
-        PORT: '3000',
-        REDIS_HOST: redisCluster.attrPrimaryEndPointAddress,
-        REDIS_PORT: '6379',
-      },
-      logging: ecs.LogDrivers.awsLogs({
-        streamPrefix: 'mcp-session',
-      }),
-    });
-
-    mcpContainer.addPortMappings({
-      containerPort: 3000,
-      protocol: ecs.Protocol.TCP,
-    });
-
-    // ECS Service with Application Load Balancer
-    const mcpService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'McpSessionService', {
-      cluster,
-      taskDefinition: mcpTaskDefinition,
-      publicLoadBalancer: false, // Internal load balancer
-      listenerPort: 80,
-      securityGroups: [appSecurityGroup],
-      desiredCount: 1,
-    });
-
-    // Lambda function
-    const assistLambda = new lambda.Function(this, 'AssistLambda', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'index.handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../agent/dist')),
-      timeout: cdk.Duration.seconds(30),
-      memorySize: 256,
-      vpc,
-      securityGroups: [appSecurityGroup],
-      environment: {
-        NODE_ENV: 'production',
-        MCP_SESSION_URL: `http://${mcpService.loadBalancer.loadBalancerDnsName}`,
-        REDIS_HOST: redisCluster.attrPrimaryEndPointAddress,
-        REDIS_PORT: '6379',
-      },
-    });
-
-    // API Gateway
-    const api = new apigateway.RestApi(this, 'DispatchAgentApi', {
-      restApiName: 'Dispatch Agent API',
-      description: 'API for Dispatch Agent service',
-      defaultCorsPreflightOptions: {
-        allowOrigins: apigateway.Cors.ALL_ORIGINS,
-        allowMethods: apigateway.Cors.ALL_METHODS,
-        allowHeaders: ['Content-Type', 'Authorization'],
-      },
-    });
-
-    // Create /v1 resource
-    const v1Resource = api.root.addResource('v1');
-
-    // Create /v1/assist resource
-    const assistResource = v1Resource.addResource('assist');
-
-    // Add POST method to /v1/assist
-    assistResource.addMethod('POST', new apigateway.LambdaIntegration(assistLambda), {
-      methodResponses: [
-        {
-          statusCode: '200',
-          responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': true,
-            'method.response.header.Access-Control-Allow-Headers': true,
-            'method.response.header.Access-Control-Allow-Methods': true,
-          },
-        },
-        {
-          statusCode: '400',
-          responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': true,
-          },
-        },
-        {
-          statusCode: '500',
-          responseParameters: {
-            'method.response.header.Access-Control-Allow-Origin': true,
-          },
-        },
-      ],
-    });
-
-    // Output the API URL
-    new cdk.CfnOutput(this, 'ApiUrl', {
-      value: api.url,
-      description: 'API Gateway URL',
-    });
-
-    // Output the Lambda function name
-    new cdk.CfnOutput(this, 'LambdaFunctionName', {
-      value: assistLambda.functionName,
-      description: 'Lambda function name',
-    });
-
-    // Export VPC and networking resources for other stacks
+    // Export resources for Lambda stack to import
     new cdk.CfnOutput(this, 'VpcId', {
       value: vpc.vpcId,
-      description: 'VPC ID',
-      exportName: 'DispatchAgent-VpcId',
+      description: 'VPC ID for Lambda functions',
+      exportName: 'Telephony-VpcId',
     });
 
     new cdk.CfnOutput(this, 'PrivateSubnetIds', {
       value: cdk.Fn.join(',', vpc.privateSubnets.map(subnet => subnet.subnetId)),
-      description: 'Private subnet IDs',
-      exportName: 'DispatchAgent-PrivateSubnetIds',
+      description: 'Private subnet IDs for Lambda functions',
+      exportName: 'Telephony-PrivateSubnetIds',
     });
 
-    new cdk.CfnOutput(this, 'AppSecurityGroupId', {
-      value: appSecurityGroup.securityGroupId,
-      description: 'Application security group ID',
-      exportName: 'DispatchAgent-AppSecurityGroupId',
+    new cdk.CfnOutput(this, 'LambdaSecurityGroupId', {
+      value: lambdaSecurityGroup.securityGroupId,
+      description: 'Security group ID for Lambda functions',
+      exportName: 'Telephony-LambdaSecurityGroupId',
     });
 
-    // Export Redis endpoint
     new cdk.CfnOutput(this, 'RedisEndpoint', {
       value: redisCluster.attrPrimaryEndPointAddress,
       description: 'Redis ElastiCache endpoint',
-      exportName: 'DispatchAgent-RedisEndpoint',
+      exportName: 'Telephony-RedisEndpoint',
     });
 
-    // Export S3 bucket name
     new cdk.CfnOutput(this, 'S3BucketName', {
       value: storageBucket.bucketName,
       description: 'S3 storage bucket name',
-      exportName: 'DispatchAgent-S3BucketName',
+      exportName: 'Telephony-S3BucketName',
     });
 
-    // Export DynamoDB table names
     new cdk.CfnOutput(this, 'DynamoDBTableNames', {
       value: JSON.stringify({
         users: usersTable.tableName,
@@ -370,28 +250,7 @@ export class DispatchAgentStack extends cdk.Stack {
         serviceBookings: serviceBookingsTable.tableName,
       }),
       description: 'DynamoDB table names',
-      exportName: 'DispatchAgent-TableNames',
-    });
-
-    // Export DynamoDB table ARNs for IAM permissions
-    new cdk.CfnOutput(this, 'DynamoDBTableArns', {
-      value: JSON.stringify({
-        users: usersTable.tableArn,
-        companies: companiesTable.tableArn,
-        services: servicesTable.tableArn,
-        callLogs: callLogsTable.tableArn,
-        transcripts: transcriptsTable.tableArn,
-        transcriptChunks: transcriptChunksTable.tableArn,
-        serviceBookings: serviceBookingsTable.tableArn,
-      }),
-      description: 'DynamoDB table ARNs',
-      exportName: 'DispatchAgent-TableArns',
-    });
-
-    // Output MCP Service Load Balancer DNS
-    new cdk.CfnOutput(this, 'McpServiceUrl', {
-      value: `http://${mcpService.loadBalancer.loadBalancerDnsName}`,
-      description: 'MCP Session Service URL',
+      exportName: 'Telephony-TableNames',
     });
   }
 }
