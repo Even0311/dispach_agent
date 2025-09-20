@@ -124,6 +124,10 @@ export class MinimalTelephonyStack extends cdk.Stack {
       description: 'Handles Twilio gather webhook calls',
       handler: 'gather-handler/index.handler',
       code: lambda.Code.fromAsset(path.join(__dirname, '../../telephony-lambdas/dist')),
+      environment: {
+        ...commonLambdaProps.environment,
+        GATHER_HANDLER_URL: 'https://ekpbh6hbruzol2to2zycnret3u0oftrk.lambda-url.ap-southeast-2.on.aws/',
+      },
     });
 
     // Add Function URL for Gather Handler
@@ -138,10 +142,8 @@ export class MinimalTelephonyStack extends cdk.Stack {
       },
     });
 
-    // Update Gather Handler with its own URL (for self-referencing in TwiML)
-    gatherHandler.addEnvironment('GATHER_HANDLER_URL', gatherFunctionUrl.url);
 
-    // Voice Handler Lambda (create with Gather Handler URL)
+    // Voice Handler Lambda (will get Gather Handler URL via addEnvironment after creation)
     const voiceHandler = new lambda.Function(this, 'VoiceHandler', {
       ...commonLambdaProps,
       functionName: 'telephony-voice-handler',
@@ -171,6 +173,7 @@ export class MinimalTelephonyStack extends cdk.Stack {
         maxAge: cdk.Duration.minutes(5),
       },
     });
+
 
     // Status Handler Lambda
     const statusHandler = new lambda.Function(this, 'StatusHandler', {
