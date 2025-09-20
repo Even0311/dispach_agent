@@ -7,6 +7,11 @@ export interface AssistResponse {
   reply: string;
 }
 
+export interface AIReplyResponse {
+  message: string;
+  shouldHangup?: boolean;
+}
+
 export interface Message {
   speaker: 'AI' | 'customer';
   message: string;

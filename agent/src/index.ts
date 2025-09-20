@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { AssistRequest, AssistResponse } from '@dispatch-agent/types';
+import { AssistRequest, AssistResponse, AIReplyResponse } from '@dispatch-agent/types';
 import { DispatchAgent } from './agent';
 import { MCPSessionClient } from './mcp-client';
 
@@ -42,10 +42,10 @@ export const handler = async (
     console.info('Processing assist request', { callSid: request.callSid });
 
     // Process the request through the LangGraph agent
-    const reply = await agent.processRequest(request);
+    const aiReply = await agent.processRequest(request);
 
     const response: AssistResponse = {
-      reply,
+      reply: aiReply.message,
     };
 
     return {

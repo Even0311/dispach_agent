@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/Code/jiangrenNew/dispatchAI/dispatch-agent/mcp/session/src/**)",
+      "Read(//d/Code/jiangrenNew/dispatchAI/dispatch-agent/types/src/**)",
+      "Read(//d/Code/jiangrenNew/dispatchAI/AI-Agent-MCP/src/mcp-project/**)",
+      "Read(//d/Code/jiangrenNew/dispatchAI/AI-Agent-MCP/src/mcp-host/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
