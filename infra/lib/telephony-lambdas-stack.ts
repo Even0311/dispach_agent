@@ -184,6 +184,9 @@ export class TelephonyLambdasStack extends cdk.Stack {
       },
     });
 
+    // Update Voice Handler with Gather Handler URL
+    voiceHandler.addEnvironment('GATHER_HANDLER_URL', gatherFunctionUrl.url);
+
     // Status Handler Lambda
     const statusHandler = new lambda.Function(this, 'StatusHandler', {
       ...commonLambdaProps,

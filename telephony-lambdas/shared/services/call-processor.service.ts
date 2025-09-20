@@ -11,7 +11,7 @@ import { WelcomeMessageHelper } from '../helpers';
 import { AiIntegrationService } from './ai';
 import { CallDataPersistenceService } from './call-data-persistence.service';
 
-const PUBLIC_URL = process.env.PUBLIC_URL || 'https://your-domain/api';
+const GATHER_HANDLER_URL = process.env.GATHER_HANDLER_URL || process.env.PUBLIC_URL || 'https://your-domain/api';
 
 export class CallProcessorService {
   private readonly statusHandlers: Record<
@@ -204,7 +204,7 @@ export class CallProcessorService {
       text,
       next,
       sid: callSid,
-      publicUrl: PUBLIC_URL,
+      publicUrl: GATHER_HANDLER_URL,
     });
   }
 }

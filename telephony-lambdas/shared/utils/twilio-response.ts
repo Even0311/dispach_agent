@@ -38,7 +38,7 @@ export function buildSayResponse({
         input: ['speech'],
         language,
         speechTimeout: 'auto',
-        action: `${publicUrl}/telephony/gather?CallSid=${sid}`,
+        action: publicUrl,
         method: 'POST',
       });
       break;
