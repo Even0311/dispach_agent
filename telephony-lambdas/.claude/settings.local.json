@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Read(//d/Code/jiangrenNew/dispatchAI/dispatch-agent/infra/**)",
+      "Bash(npx cdk synth:*)",
+      "Bash(./validate-minimal.sh:*)",
+      "Bash(./deploy-minimal.sh)",
+      "Bash(aws cloudformation describe-stacks:*)",
+      "Bash(aws cloudformation:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

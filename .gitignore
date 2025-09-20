@@ -28,3 +28,7 @@ yarn-error.log*
 pnpm-debug.log*
 
 prompt.txt
+
+# Test files with sensitive data
+**/test-*.js
+test-*.js
