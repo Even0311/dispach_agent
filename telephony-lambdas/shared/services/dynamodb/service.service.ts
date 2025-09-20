@@ -2,7 +2,14 @@ import { Service } from '../../types';
 import { BaseDynamoDBService } from './base.service';
 
 export class ServiceService extends BaseDynamoDBService {
-  private readonly tableName = process.env.SERVICES_TABLE_NAME || 'Services';
+  private readonly tableName = (() => {
+    try {
+      const tableNames = JSON.parse(process.env.DYNAMODB_TABLE_NAMES || '{}');
+      return tableNames.services || process.env.SERVICES_TABLE_NAME || 'Telephony-Services';
+    } catch {
+      return process.env.SERVICES_TABLE_NAME || 'Telephony-Services';
+    }
+  })();
 
   async findAllActiveByUserId(userId: string): Promise<Service[]> {
     try {

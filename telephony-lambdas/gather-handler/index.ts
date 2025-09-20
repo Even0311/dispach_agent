@@ -13,7 +13,20 @@ export const handler = async (
     // Parse the request body
     let body: VoiceGatherBody;
     try {
-      body = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+      if (!event.body) {
+        throw new Error('No request body provided');
+      }
+
+      // Handle Base64 encoded body from Lambda Function URL
+      const rawBody = event.isBase64Encoded
+        ? Buffer.from(event.body, 'base64').toString('utf-8')
+        : event.body;
+
+      // Parse form-urlencoded data from Twilio
+      const urlParams = new URLSearchParams(rawBody);
+      body = Object.fromEntries(urlParams.entries()) as unknown as VoiceGatherBody;
+
+      console.log('[GatherHandler] Parsed request body:', body);
     } catch (error) {
       console.error('[GatherHandler] Failed to parse request body:', error);
       return {

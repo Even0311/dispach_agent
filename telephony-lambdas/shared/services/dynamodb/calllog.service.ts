@@ -11,7 +11,7 @@ export interface CreateCallLogDto {
 }
 
 export class CalllogService extends BaseDynamoDBService {
-  private readonly tableName = process.env.CALLLOGS_TABLE_NAME || 'CallLogs';
+  private readonly tableName = process.env.CALLLOGS_TABLE_NAME || 'Telephony-CallLogs';
 
   async create(createCallLogDto: CreateCallLogDto): Promise<CallLog> {
     try {

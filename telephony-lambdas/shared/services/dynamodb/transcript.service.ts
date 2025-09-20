@@ -8,7 +8,7 @@ export interface CreateTranscriptDto {
 }
 
 export class TranscriptService extends BaseDynamoDBService {
-  private readonly tableName = process.env.TRANSCRIPTS_TABLE_NAME || 'Transcripts';
+  private readonly tableName = process.env.TRANSCRIPTS_TABLE_NAME || 'Telephony-Transcripts';
 
   async create(createTranscriptDto: CreateTranscriptDto): Promise<Transcript> {
     try {

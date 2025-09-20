@@ -132,36 +132,10 @@ export class TelephonyLambdasStack extends cdk.Stack {
       logRetention: logs.RetentionDays.ONE_MONTH,
     };
 
-    // Voice Handler Lambda
-    const voiceHandler = new lambda.Function(this, 'VoiceHandler', {
-      ...commonLambdaProps,
-      functionName: 'telephony-voice-handler',
-      description: 'Handles Twilio voice webhook calls',
-      handler: 'dist/voice-handler/index.handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../telephony-lambdas'), {
-        exclude: ['src', 'test', '.git', 'README.md', 'tsconfig.json'],
-      }),
-    });
-
-    // Add Function URL for Voice Handler
-    const voiceFunctionUrl = voiceHandler.addFunctionUrl({
-      authType: lambda.FunctionUrlAuthType.NONE,
-      cors: {
-        allowCredentials: false,
-        allowedHeaders: ['Content-Type'],
-        allowedMethods: [lambda.HttpMethod.POST],
-        allowedOrigins: [
-          'https://webhooks.twilio.com',
-          'https://*.twilio.com',
-        ],
-        maxAge: cdk.Duration.minutes(5),
-      },
-    });
-
-    // Gather Handler Lambda
+    // Gather Handler Lambda (create first to get URL)
     const gatherHandler = new lambda.Function(this, 'GatherHandler', {
       ...commonLambdaProps,
-      functionName: 'dispatch-agent-gather-handler',
+      functionName: 'telephony-gather-handler',
       description: 'Handles Twilio gather webhook calls',
       handler: 'dist/gather-handler/index.handler',
       code: lambda.Code.fromAsset(path.join(__dirname, '../../telephony-lambdas'), {
@@ -184,13 +158,49 @@ export class TelephonyLambdasStack extends cdk.Stack {
       },
     });
 
-    // Update Voice Handler with Gather Handler URL
-    voiceHandler.addEnvironment('GATHER_HANDLER_URL', gatherFunctionUrl.url);
+    // Voice Handler Lambda (create with Gather Handler URL)
+    const voiceHandler = new lambda.Function(this, 'VoiceHandler', {
+      runtime: commonLambdaProps.runtime,
+      architecture: commonLambdaProps.architecture,
+      memorySize: commonLambdaProps.memorySize,
+      timeout: commonLambdaProps.timeout,
+      reservedConcurrentExecutions: commonLambdaProps.reservedConcurrentExecutions,
+      vpc: commonLambdaProps.vpc,
+      vpcSubnets: commonLambdaProps.vpcSubnets,
+      securityGroups: commonLambdaProps.securityGroups,
+      role: commonLambdaProps.role,
+      logRetention: commonLambdaProps.logRetention,
+      functionName: 'telephony-voice-handler',
+      description: 'Handles Twilio voice webhook calls',
+      handler: 'dist/voice-handler/index.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../../telephony-lambdas'), {
+        exclude: ['src', 'test', '.git', 'README.md', 'tsconfig.json'],
+      }),
+      environment: {
+        ...commonLambdaProps.environment,
+        GATHER_HANDLER_URL: gatherFunctionUrl.url,
+      },
+    });
+
+    // Add Function URL for Voice Handler
+    const voiceFunctionUrl = voiceHandler.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE,
+      cors: {
+        allowCredentials: false,
+        allowedHeaders: ['Content-Type'],
+        allowedMethods: [lambda.HttpMethod.POST],
+        allowedOrigins: [
+          'https://webhooks.twilio.com',
+          'https://*.twilio.com',
+        ],
+        maxAge: cdk.Duration.minutes(5),
+      },
+    });
 
     // Status Handler Lambda
     const statusHandler = new lambda.Function(this, 'StatusHandler', {
       ...commonLambdaProps,
-      functionName: 'dispatch-agent-status-handler',
+      functionName: 'telephony-status-handler',
       description: 'Handles Twilio status callback calls',
       handler: 'dist/status-handler/index.handler',
       code: lambda.Code.fromAsset(path.join(__dirname, '../../telephony-lambdas'), {

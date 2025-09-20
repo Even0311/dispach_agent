@@ -117,28 +117,7 @@ export class MinimalTelephonyStack extends cdk.Stack {
       logRetention: logs.RetentionDays.ONE_WEEK, // Reduced for cost optimization
     };
 
-    // Voice Handler Lambda
-    const voiceHandler = new lambda.Function(this, 'VoiceHandler', {
-      ...commonLambdaProps,
-      functionName: 'telephony-voice-handler',
-      description: 'Handles Twilio voice webhook calls - v3 with Layer',
-      handler: 'voice-handler/index.handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../telephony-lambdas/dist')),
-    });
-
-    // Add Function URL for Voice Handler
-    const voiceFunctionUrl = voiceHandler.addFunctionUrl({
-      authType: lambda.FunctionUrlAuthType.NONE,
-      cors: {
-        allowCredentials: false,
-        allowedHeaders: ['*'],
-        allowedMethods: [lambda.HttpMethod.ALL],
-        allowedOrigins: ['*'],
-        maxAge: cdk.Duration.minutes(5),
-      },
-    });
-
-    // Gather Handler Lambda
+    // Gather Handler Lambda (create first to get URL for Voice Handler)
     const gatherHandler = new lambda.Function(this, 'GatherHandler', {
       ...commonLambdaProps,
       functionName: 'telephony-gather-handler',
@@ -149,6 +128,40 @@ export class MinimalTelephonyStack extends cdk.Stack {
 
     // Add Function URL for Gather Handler
     const gatherFunctionUrl = gatherHandler.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE,
+      cors: {
+        allowCredentials: false,
+        allowedHeaders: ['*'],
+        allowedMethods: [lambda.HttpMethod.ALL],
+        allowedOrigins: ['*'],
+        maxAge: cdk.Duration.minutes(5),
+      },
+    });
+
+    // Update Gather Handler with its own URL (for self-referencing in TwiML)
+    gatherHandler.addEnvironment('GATHER_HANDLER_URL', gatherFunctionUrl.url);
+
+    // Voice Handler Lambda (create with Gather Handler URL)
+    const voiceHandler = new lambda.Function(this, 'VoiceHandler', {
+      ...commonLambdaProps,
+      functionName: 'telephony-voice-handler',
+      description: 'Handles Twilio voice webhook calls - v5 with Environment Fix',
+      handler: 'voice-handler/index.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../../telephony-lambdas/dist')),
+      environment: {
+        NODE_ENV: 'production',
+        REDIS_HOST: redisEndpoint,
+        REDIS_PORT: '6379',
+        S3_BUCKET: s3BucketName,
+        DYNAMODB_TABLE_NAMES: tableNames,
+        AI_SERVICE_URL: process.env.AI_SERVICE_URL || 'https://your-ai-service.com',
+        DISPATCH_SERVICE_URL: process.env.DISPATCH_SERVICE_URL || 'https://your-dispatch-service.com',
+        GATHER_HANDLER_URL: gatherFunctionUrl.url,
+      },
+    });
+
+    // Add Function URL for Voice Handler
+    const voiceFunctionUrl = voiceHandler.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
       cors: {
         allowCredentials: false,

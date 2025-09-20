@@ -8,7 +8,7 @@ export interface CreateTranscriptChunkDto {
 }
 
 export class TranscriptChunkService extends BaseDynamoDBService {
-  private readonly tableName = process.env.TRANSCRIPT_CHUNKS_TABLE_NAME || 'TranscriptChunks';
+  private readonly tableName = process.env.TRANSCRIPT_CHUNKS_TABLE_NAME || 'Telephony-TranscriptChunks';
 
   async createMany(transcriptId: string, chunks: CreateTranscriptChunkDto[]): Promise<TranscriptChunk[]> {
     try {

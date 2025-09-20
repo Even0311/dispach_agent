@@ -20,7 +20,7 @@ export interface CreateServiceBookingDto {
 }
 
 export class ServiceBookingService extends BaseDynamoDBService {
-  private readonly tableName = process.env.SERVICE_BOOKINGS_TABLE_NAME || 'ServiceBookings';
+  private readonly tableName = process.env.SERVICE_BOOKINGS_TABLE_NAME || 'Telephony-ServiceBookings';
 
   async create(createServiceBookingDto: CreateServiceBookingDto): Promise<ServiceBooking> {
     try {

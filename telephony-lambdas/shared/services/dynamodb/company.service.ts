@@ -2,7 +2,14 @@ import { Company } from '../../types';
 import { BaseDynamoDBService } from './base.service';
 
 export class CompanyService extends BaseDynamoDBService {
-  private readonly tableName = process.env.COMPANIES_TABLE_NAME || 'Companies';
+  private readonly tableName = (() => {
+    try {
+      const tableNames = JSON.parse(process.env.DYNAMODB_TABLE_NAMES || '{}');
+      return tableNames.companies || process.env.COMPANIES_TABLE_NAME || 'Telephony-Companies';
+    } catch {
+      return process.env.COMPANIES_TABLE_NAME || 'Telephony-Companies';
+    }
+  })();
 
   async findByUserId(userId: string): Promise<Company | null> {
     try {

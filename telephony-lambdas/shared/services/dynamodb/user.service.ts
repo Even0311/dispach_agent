@@ -2,7 +2,14 @@ import { User } from '../../types';
 import { BaseDynamoDBService } from './base.service';
 
 export class UserService extends BaseDynamoDBService {
-  private readonly tableName = process.env.USERS_TABLE_NAME || 'Users';
+  private readonly tableName = (() => {
+    try {
+      const tableNames = JSON.parse(process.env.DYNAMODB_TABLE_NAMES || '{}');
+      return tableNames.users || process.env.USERS_TABLE_NAME || 'Telephony-Users';
+    } catch {
+      return process.env.USERS_TABLE_NAME || 'Telephony-Users';
+    }
+  })();
 
   async findByTwilioPhoneNumber(twilioPhoneNumber: string): Promise<User | null> {
     try {
