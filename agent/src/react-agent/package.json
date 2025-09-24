@@ -1,0 +1,41 @@
+{
+  "name": "@dispatch-agent/react-agent",
+  "version": "1.0.0",
+  "description": "LangGraph React Agent for Electrician Services using AWS Bedrock",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "package": "npm run build && zip -r react-agent.zip dist/ node_modules/ package.json"
+  },
+  "keywords": [
+    "langchain",
+    "langgraph",
+    "react-agent",
+    "bedrock",
+    "aws-lambda",
+    "electrician"
+  ],
+  "author": "Dispatch Agent Team",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.450.0",
+    "@langchain/community": "^0.0.38",
+    "@langchain/core": "^0.1.48",
+    "@langchain/langgraph": "^0.0.11",
+    "langchain": "^0.1.25",
+    "langsmith": "^0.0.58",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.131",
+    "@types/node": "^20.10.5",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0",
+    "typescript": "^5.3.3"
+  }
+}

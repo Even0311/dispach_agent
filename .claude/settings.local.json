@@ -15,7 +15,8 @@
       "Bash(node:*)",
       "Bash(CDK_DEFAULT_REGION=ap-southeast-2 npx cdk deploy TelephonyLambdasStack --app \"node bin/minimal-app.js\" --require-approval never --force)",
       "Bash(aws cloudformation describe-stacks:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []

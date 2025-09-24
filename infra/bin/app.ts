@@ -3,6 +3,7 @@ import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { DispatchAgentStack } from '../lib/dispatch-agent-stack';
 import { TelephonyLambdasStack } from '../lib/telephony-lambdas-stack';
+import { BedrockInferenceProfileStack } from '../lib/bedrock-inference-profile-stack';
 
 const app = new cdk.App();
 
@@ -16,6 +17,14 @@ const infraStack = new DispatchAgentStack(app, 'DispatchAgentStack', {
 
 // Telephony Lambda stack - depends on infrastructure stack
 const telephonyStack = new TelephonyLambdasStack(app, 'TelephonyLambdasStack', {
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: 'ap-southeast-2',
+  },
+});
+
+// Bedrock inference profile stack - can be deployed independently
+const bedrockStack = new BedrockInferenceProfileStack(app, 'BedrockInferenceProfileStack', {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: 'ap-southeast-2',
