@@ -3,6 +3,7 @@ import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { MinimalInfraStack } from '../lib/minimal-infra-stack';
 import { MinimalTelephonyStack } from '../lib/minimal-telephony-stack';
+import { AgentLambdaStack } from '../lib/agent-lambda-stack';
 
 const app = new cdk.App();
 
@@ -24,8 +25,18 @@ const telephonyStack = new MinimalTelephonyStack(app, 'TelephonyLambdasStack', {
   description: 'Telephony Lambda functions with Function URLs for Twilio webhooks',
 });
 
-// Add dependency to ensure infrastructure is deployed first
+// Agent Lambda stack - depends on infrastructure stack
+const agentStack = new AgentLambdaStack(app, 'AgentLambdaStack', {
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: 'ap-southeast-2',
+  },
+  description: 'React Agent Lambda for handling service inquiries and bookings',
+});
+
+// Add dependencies to ensure infrastructure is deployed first
 telephonyStack.addDependency(infraStack);
+agentStack.addDependency(infraStack);
 
 // Add tags for cost tracking
 const tags = {
@@ -37,4 +48,5 @@ const tags = {
 Object.entries(tags).forEach(([key, value]) => {
   cdk.Tags.of(infraStack).add(key, value);
   cdk.Tags.of(telephonyStack).add(key, value);
+  cdk.Tags.of(agentStack).add(key, value);
 });

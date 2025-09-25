@@ -5,11 +5,11 @@
  * Run with: npm run build && node dist/test-agent.js
  */
 
-import { ElectricianReactAgent } from './agent';
+import { GeneralServiceReactAgent } from './agent';
 import { AgentRequest } from './types';
 
 async function testAgent() {
-  console.log('🔧 Testing Electrician React Agent...\n');
+  console.log('🔧 Testing General Service React Agent...\n');
 
   // Set up environment variables for testing
   process.env.BEDROCK_REGION = 'ap-southeast-2';
@@ -18,7 +18,7 @@ async function testAgent() {
   process.env.NODE_ENV = 'development';
 
   try {
-    const agent = new ElectricianReactAgent();
+    const agent = new GeneralServiceReactAgent();
 
     // Test 1: Basic service inquiry
     console.log('📋 Test 1: Service Information Inquiry');

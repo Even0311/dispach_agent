@@ -1,14 +1,14 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
-import { ElectricianReactAgent } from './agent';
+import { GeneralServiceReactAgent } from './agent';
 import { AgentRequest, AgentResponse } from './types';
 
 // Initialize agent instance (reuse across warm starts)
-let agentInstance: ElectricianReactAgent | null = null;
+let agentInstance: GeneralServiceReactAgent | null = null;
 
-const initializeAgent = async (): Promise<ElectricianReactAgent> => {
+const initializeAgent = async (): Promise<GeneralServiceReactAgent> => {
   if (!agentInstance) {
     console.log('Initializing ElectricianReactAgent...');
-    agentInstance = new ElectricianReactAgent();
+    agentInstance = new GeneralServiceReactAgent();
 
     // Test connection on first initialization
     const isConnected = await agentInstance.testConnection();
@@ -167,5 +167,5 @@ export const handler = async (
 };
 
 // Export for local testing
-export { ElectricianReactAgent } from './agent';
+export { GeneralServiceReactAgent } from './agent';
 export * from './types';

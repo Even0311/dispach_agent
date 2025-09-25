@@ -1,30 +1,4 @@
 // Local type definitions
-export interface Message {
-  speaker: 'AI' | 'customer';
-  message: string;
-  startedAt: string;
-}
-
-export interface Service {
-  id: string;
-  name: string;
-  price: number | null;
-  description?: string;
-}
-
-export interface UserInfo {
-  name?: string;
-  phone?: string;
-  address?: string;
-}
-
-export interface Company {
-  id: string;
-  name: string;
-  email: string;
-  userId: string;
-  calendar_access_token?: string;
-}
 
 export interface CallSkeleton {
   callSid: string;
@@ -39,6 +13,35 @@ export interface CallSkeleton {
   servicebooked: boolean;
   confirmEmailsent: boolean;
   createdAt?: string;
+}
+export interface Message {
+  speaker: 'AI' | 'customer' | 'system';
+  message: string;
+  startedAt: string;
+  timestamp?: string;
+}
+
+export interface Service {
+  id: string;
+  name: string;
+  price: number | null;
+  description?: string;
+  duration?: number;
+}
+
+export interface UserInfo {
+  name?: string;
+  phone?: string;
+  address?: string;
+}
+
+export interface Company {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  userId: string;
+  calendar_access_token?: string;
 }
 
 export interface AgentState {

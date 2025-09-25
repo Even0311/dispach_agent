@@ -1,15 +1,14 @@
-import { BedrockRuntimeClient } from "@aws-sdk/client-bedrock-runtime";
 import { BedrockChat } from "@langchain/community/chat_models/bedrock";
-import { StateGraph, END, START } from "@langchain/langgraph";
+import { StateGraph, END, START, Annotation } from "@langchain/langgraph";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
-import { BaseMessage, HumanMessage, AIMessage } from "@langchain/core/messages";
+import { BaseMessage, HumanMessage, AIMessage, SystemMessage } from "@langchain/core/messages";
 import { RunnableConfig, Runnable } from "@langchain/core/runnables";
 import { LangChainTracer } from "@langchain/core/tracers/tracer_langchain";
 import { electricianTools } from './tools/electrician-service-tool';
-import { ELECTRICIAN_SYSTEM_PROMPT } from './prompts';
+import { GENERAL_SYSTEM_PROMPT } from './prompts';
 import { AgentState, AgentRequest, AgentResponse, AgentStep } from './types';
 
-export class ElectricianReactAgent {
+export class GeneralServiceReactAgent {
   private modelRunnable!: Runnable;
   private tools: any[];
   private toolNode: ToolNode;
@@ -24,13 +23,9 @@ export class ElectricianReactAgent {
   }
 
   private initializeModel() {
-    const bedrockClient = new BedrockRuntimeClient({
-      region: process.env.BEDROCK_REGION || 'ap-southeast-2',
-    });
-
     let model: BedrockChat = new BedrockChat({
       model: process.env.PRIMARY_MODEL || 'anthropic.claude-3-5-sonnet-20241022-v2:0',
-      region: process.env.BEDROCK_AWS_REGION || 'ap-southeast-2'// Lower temperature for more consistent tool usage
+      region: process.env.BEDROCK_AWS_REGION || 'ap-southeast-2'
     });
 
     // Bind tools to the model
@@ -38,21 +33,20 @@ export class ElectricianReactAgent {
   }
 
   private buildWorkflow() {
-    // Define the agent state
-    const agentState = {
-      messages: {
-        value: (x: BaseMessage[], y: BaseMessage[]) => x.concat(y),
-        default: () => [] as BaseMessage[],
-      },
-      next: {
-        value: (x: string, y: string) => y ?? x,
+    // Define the agent state annotation using LangGraph v0.3 pattern
+    const GraphAnnotation = Annotation.Root({
+      messages: Annotation<BaseMessage[]>({
+        reducer: (x, y) => x.concat(y),
+        default: () => [],
+      }),
+      next: Annotation<string>({
+        reducer: (x, y) => y ?? x,
         default: () => "agent",
-      },
-    };
-    type NodeType = typeof agentState;
-    type EdgeType = any;
+      }),
+    });
+
     // Create the StateGraph
-    this.workflow = new StateGraph<NodeType, EdgeType>({ channels: agentState });
+    this.workflow = new StateGraph(GraphAnnotation);
 
     // Define agent node
     this.workflow.addNode("agent", this.agentNode.bind(this));
@@ -85,8 +79,8 @@ export class ElectricianReactAgent {
 
     // Add system message if it's the first message
     if (messages.length === 0 || !messages.some(m => m._getType() === 'system')) {
-      const systemMessage = new HumanMessage({
-        content: ELECTRICIAN_SYSTEM_PROMPT,
+      const systemMessage = new SystemMessage({
+        content: GENERAL_SYSTEM_PROMPT,
       });
       messages.unshift(systemMessage);
     }
@@ -97,7 +91,7 @@ export class ElectricianReactAgent {
     } catch (error) {
       console.error("Error in agent node:", error);
       const errorMessage = new AIMessage({
-        content: "I apologize, but I'm having trouble processing your request right now. Please try again or contact our office directly at +61-2-9876-5432.",
+        content: "I apologize, but I'm having trouble processing your request right now. Please try again or contact our office directly.",
       });
       return { messages: [errorMessage] };
     }
@@ -112,7 +106,8 @@ export class ElectricianReactAgent {
     }
 
     // Check if the last message has tool calls
-    if (lastMessage.additional_kwargs?.tool_calls?.length > 0) {
+    const aiMessage = lastMessage as any;
+    if (aiMessage.tool_calls && Array.isArray(aiMessage.tool_calls) && aiMessage.tool_calls.length > 0) {
       return "tools";
     }
 
@@ -127,7 +122,7 @@ export class ElectricianReactAgent {
     try {
       // Initialize tracer for LangSmith
       const tracer = new LangChainTracer({
-        projectName: process.env.LANGSMITH_PROJECT || "electrician-react-agent"
+        projectName: process.env.LANGSMITH_PROJECT || "general-service-react-agent"
       });
 
       // Create initial state
@@ -146,7 +141,7 @@ export class ElectricianReactAgent {
           session_id: sessionId,
           user_query: request.query,
         },
-        tags: ["electrician-agent", "react"],
+        tags: ["general-service-agent", "react"],
       };
 
       const result = await this.app.invoke(initialState, config);
@@ -175,7 +170,7 @@ export class ElectricianReactAgent {
       const executionTime = ((Date.now() - startTime) / 1000).toFixed(2);
 
       return {
-        result: "I apologize, but I encountered an error while processing your request. Please contact Sydney Professional Electricians directly at +61-2-9876-5432 for immediate assistance.",
+        result: "I apologize, but I encountered an error while processing your request. Please contact our office directly for immediate assistance.",
         steps: [{
           type: 'final_answer',
           content: `Error: ${err.message}`,
@@ -188,7 +183,7 @@ export class ElectricianReactAgent {
   }
 
   private extractSteps(messages: BaseMessage[], steps: AgentStep[]): void {
-    messages.forEach((message, index) => {
+    messages.forEach((message) => {
       const timestamp = new Date().toISOString();
 
       if (message.getType() === 'human') {
@@ -199,8 +194,9 @@ export class ElectricianReactAgent {
         });
       } else if (message.getType() === 'ai') {
         // Check for tool calls
-        const toolCalls = message.additional_kwargs?.tool_calls;
-        if (toolCalls && toolCalls.length > 0) {
+        const aiMessage = message as any;
+        const toolCalls = aiMessage.tool_calls;
+        if (toolCalls && Array.isArray(toolCalls) && toolCalls.length > 0) {
           toolCalls.forEach((toolCall: any) => {
             steps.push({
               type: 'action',
@@ -232,7 +228,7 @@ export class ElectricianReactAgent {
   public async testConnection(): Promise<boolean> {
     try {
       const testResponse = await this.execute({
-        query: "Hello, I need information about your electrical services.",
+        query: "Hello, I need information about your services.",
         session_id: "test_session"
       });
 
