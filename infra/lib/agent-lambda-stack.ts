@@ -37,13 +37,9 @@ export class AgentLambdaStack extends cdk.Stack {
       securityGroupId
     );
 
-    // Create Parameter Store parameter for LangSmith API key
-    const langsmithApiKeyParam = new ssm.StringParameter(this, 'LangSmithApiKeyParam', {
-      parameterName: '/dispatch-agent/langsmith/api-key',
-      description: 'LangSmith API key for agent tracing and monitoring',
-      stringValue: 'placeholder-key', // Will be updated manually after deployment
-      tier: ssm.ParameterTier.STANDARD,
-    });
+    // Reference to manually created Parameter Store parameter for LangSmith API key
+    // Note: This parameter should be created manually in AWS Console or CLI
+    const langsmithApiKeyParamName = 'LANGSMITH-API-KEY';
 
     // Create IAM role for Agent Lambda function
     const agentLambdaExecutionRole = new iam.Role(this, 'AgentLambdaExecutionRole', {
@@ -135,7 +131,7 @@ export class AgentLambdaStack extends cdk.Stack {
               ],
               resources: [
                 `arn:aws:ssm:${this.region}:${this.account}:parameter/dispatch-agent/*`,
-                langsmithApiKeyParam.parameterArn,
+                `arn:aws:ssm:${this.region}:${this.account}:parameter/LANGSMITH-API-KEY`,
               ],
             }),
           ],
@@ -280,7 +276,7 @@ export class AgentLambdaStack extends cdk.Stack {
         // LangSmith
         LANGSMITH_PROJECT: 'dispatch-agent-react-agent',
         LANGSMITH_TRACING: 'true',
-        LANGSMITH_API_KEY_PARAM: langsmithApiKeyParam.parameterName,
+        LANGSMITH_API_KEY_PARAM: langsmithApiKeyParamName,
 
         // Agent
         AGENT_MAX_ITERATIONS: '10',
@@ -386,7 +382,7 @@ export class AgentLambdaStack extends cdk.Stack {
 
     // Output Parameter Store parameter name
     new cdk.CfnOutput(this, 'LangSmithApiKeyParameterName', {
-      value: langsmithApiKeyParam.parameterName,
+      value: langsmithApiKeyParamName,
       description: 'Parameter Store parameter name for LangSmith API key',
       exportName: 'DispatchAgent-LangSmithApiKeyParam',
     });

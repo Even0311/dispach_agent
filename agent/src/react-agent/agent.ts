@@ -114,16 +114,38 @@ export class GeneralServiceReactAgent {
     return "end";
   }
 
-  public async execute(request: AgentRequest): Promise<AgentResponse> {
+  public async execute(request: AgentRequest, langsmithApiKey?: string): Promise<AgentResponse> {
     const startTime = Date.now();
     const steps: AgentStep[] = [];
     const sessionId = request.session_id || `session_${Date.now()}`;
 
     try {
-      // Initialize tracer for LangSmith
-      const tracer = new LangChainTracer({
-        projectName: process.env.LANGSMITH_PROJECT || "general-service-react-agent"
-      });
+      // Initialize tracer for LangSmith (only if API key is available)
+      let tracer = null;
+      const apiKey = langsmithApiKey || process.env.LANGCHAIN_API_KEY;
+
+      if (apiKey && apiKey !== 'placeholder-key') {
+        try {
+          // Temporarily set the API key for this execution
+          const originalApiKey = process.env.LANGCHAIN_API_KEY;
+          process.env.LANGCHAIN_API_KEY = apiKey;
+
+          tracer = new LangChainTracer({
+            projectName: process.env.LANGSMITH_PROJECT || "dispatch-agent-react-agent"
+          });
+          console.log('LangSmith tracer initialized successfully with provided API key');
+
+          // Restore original API key
+          if (originalApiKey) {
+            process.env.LANGCHAIN_API_KEY = originalApiKey;
+          }
+        } catch (error) {
+          console.warn('Failed to initialize LangSmith tracer:', error);
+          tracer = null;
+        }
+      } else {
+        console.log('LangSmith API key not available, skipping tracing');
+      }
 
       // Create initial state
       const initialState = {
@@ -134,9 +156,9 @@ export class GeneralServiceReactAgent {
         intermediate_steps: [],
       };
 
-      // Execute the workflow with tracing
+      // Execute the workflow with tracing (if available)
       const config: RunnableConfig = {
-        callbacks: [tracer],
+        callbacks: tracer ? [tracer] : [],
         metadata: {
           session_id: sessionId,
           user_query: request.query,

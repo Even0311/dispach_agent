@@ -1,0 +1,2 @@
+- 我们现在一直在部署的都是minimal stack， dispatch agent stack暂时没有启用， 为了节省成本。 所以每一次部署你都记得要部署minimal stack
+- 我项目用的是pnpm，每次安装记得用pnpm

@@ -20,6 +20,7 @@ const getLangSmithApiKey = async (): Promise<string | null> => {
 
   try {
     const paramName = process.env.LANGSMITH_API_KEY_PARAM;
+    console.log("[LANGSMITH API KEY PARAM],", paramName);
     if (!paramName) {
       console.warn('LANGSMITH_API_KEY_PARAM environment variable not set');
       return null;
@@ -27,7 +28,7 @@ const getLangSmithApiKey = async (): Promise<string | null> => {
 
     const command = new GetParameterCommand({
       Name: paramName,
-      WithDecryption: true,
+      WithDecryption: false, // Standard String 不需要解密
     });
 
     const result = await ssmClient.send(command);
@@ -37,7 +38,10 @@ const getLangSmithApiKey = async (): Promise<string | null> => {
     if (langsmithApiKey) {
       // Set the environment variable for LangSmith
       process.env.LANGCHAIN_API_KEY = langsmithApiKey;
-      console.log('LangSmith API key retrieved and set successfully');
+      console.log('LangSmith API key retrieved and set successfully', {
+        keyPrefix: langsmithApiKey.substring(0, 8) + '...',
+        keyLength: langsmithApiKey.length
+      });
     } else {
       console.warn('LangSmith API key not found in Parameter Store');
     }
@@ -225,7 +229,8 @@ export const handler = async (
       // Initialize and execute agent
       try {
         const agent = await initializeAgent();
-        const result: AgentResponse = await agent.execute(agentRequest);
+        // Pass the LangSmith API key to the agent if available
+        const result: AgentResponse = await agent.execute(agentRequest, langsmithApiKey || undefined);
 
         const processingTime = ((Date.now() - startTime) / 1000).toFixed(2);
 
