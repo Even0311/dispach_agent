@@ -1,0 +1,46 @@
+{
+  "name": "@dispatch-agent/agent",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test:bedrock": "tsc && node dist/test-bedrock.js",
+    "test:langgraph": "tsc && node dist/test-langgraph-agent.js",
+    "test:simple": "tsc && node dist/test-simple-agent.js",
+    "test:enhanced": "tsc && node dist/test-enhanced-agent.js",
+    "cdk:synth": "cdk synth --app \"npx ts-node cdk/app.ts\"",
+    "cdk:deploy": "cdk deploy --app \"npx ts-node cdk/app.ts\"",
+    "cdk:destroy": "cdk destroy --app \"npx ts-node cdk/app.ts\""
+  },
+  "dependencies": {
+    "@aws-crypto/sha256-js": "^5.2.0",
+    "@aws-lambda-powertools/logger": "^1.17.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.504.0",
+    "@aws-sdk/client-ssm": "^3.504.0",
+    "@aws-sdk/types": "^3.893.0",
+    "@dispatch-agent/types": "workspace:*",
+    "@langchain/aws": "^0.1.15",
+    "@langchain/community": "^0.3.56",
+    "@langchain/core": "^0.3.76",
+    "@langchain/langgraph": "^0.4.9",
+    "@langchain/openai": "^0.3.10",
+    "@modelcontextprotocol/sdk": "^1.18.0",
+    "@smithy/eventstream-codec": "^4.1.1",
+    "@smithy/protocol-http": "^5.2.1",
+    "@smithy/signature-v4": "^5.2.1",
+    "@smithy/util-utf8": "^4.1.0",
+    "ioredis": "^5.7.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.131",
+    "@types/node": "^20.19.15",
+    "aws-cdk": "^2.168.0",
+    "aws-cdk-lib": "^2.168.0",
+    "constructs": "^10.0.0",
+    "source-map-support": "^0.5.21",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.3.3"
+  }
+}

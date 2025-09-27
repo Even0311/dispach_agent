@@ -6,6 +6,8 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { Construct } from 'constructs';
 import * as path from 'path';
+import { NodejsFunction, OutputFormat } from 'aws-cdk-lib/aws-lambda-nodejs';
+import { LogLevel } from 'aws-cdk-lib/aws-lambda-nodejs';
 
 export class AgentLambdaStack extends cdk.Stack {
   public readonly agentFunction: lambda.Function;
@@ -142,41 +144,122 @@ export class AgentLambdaStack extends cdk.Stack {
     });
 
     // Agent Lambda function configuration
-    this.agentFunction = new lambda.Function(this, 'AgentFunction', {
-      functionName: 'dispatch-agent-react-agent',
+    // this.agentFunction = new lambda.Function(this, 'AgentFunction', {
+    //   functionName: 'dispatch-agent-react-agent',
+    //   description: 'React Agent for handling general service inquiries and bookings',
+    //   runtime: lambda.Runtime.NODEJS_20_X,
+    //   architecture: lambda.Architecture.ARM_64,
+    //   handler: 'dist/lambda-handler.handler',
+    //   code: lambda.Code.fromAsset(path.join(__dirname, '../../agent'), {
+    //     exclude: [
+    //       'test',
+    //       '*.ts',
+    //       '*.md',
+    //       'tsconfig.json',
+    //       '.claude',
+    //       'cdk.json',
+    //       // Include node_modules and compiled dist folder
+    //     ],
+    //   }),
+    //   memorySize: 1024, // Increased memory for ML workloads
+    //   timeout: cdk.Duration.minutes(5), // Longer timeout for agent processing
+    //   // Remove reserved concurrency to avoid account limits for development
+    //   vpc,
+    //   vpcSubnets: {
+    //     subnets: vpc.privateSubnets,
+    //   },
+    //   securityGroups: [securityGroup],
+    //   role: agentLambdaExecutionRole,
+    //   environment: {
+    //     NODE_ENV: 'production',
+
+    //     // Redis configuration
+    //     REDIS_HOST: redisEndpoint,
+    //     REDIS_PORT: '6379',
+    //     REDIS_PASSWORD: process.env.REDIS_PASSWORD || '',
+    //     REDIS_DB: '0',
+
+    //     // DynamoDB configuration
+    //     DYNAMODB_TABLE_NAMES: tableNames,
+    //     USERS_TABLE_NAME: 'Telephony-Users',
+    //     CALLLOGS_TABLE_NAME: 'Telephony-CallLogs',
+    //     COMPANIES_TABLE_NAME: 'Telephony-Companies',
+    //     SERVICE_BOOKINGS_TABLE_NAME: 'Telephony-ServiceBookings',
+    //     SERVICES_TABLE_NAME: 'Telephony-Services',
+    //     TRANSCRIPT_CHUNKS_TABLE_NAME: 'Telephony-TranscriptChunks',
+    //     TRANSCRIPTS_TABLE_NAME: 'Telephony-Transcripts',
+
+    //     // S3 configuration
+    //     S3_BUCKET: s3BucketName,
+
+    //     // Bedrock configuration
+    //     BEDROCK_AWS_REGION: this.region,
+    //     PRIMARY_MODEL: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+    //     FALLBACK_MODEL: 'anthropic.claude-3-haiku-20240307-v1:0',
+
+    //     // LangSmith configuration (API key from Parameter Store)
+    //     LANGSMITH_PROJECT: 'dispatch-agent-react-agent',
+    //     LANGSMITH_TRACING: 'true',
+    //     LANGSMITH_API_KEY_PARAM: langsmithApiKeyParam.parameterName,
+
+    //     // Agent configuration
+    //     AGENT_MAX_ITERATIONS: '10',
+    //     AGENT_TIMEOUT_SECONDS: '280', // Leave buffer for Lambda timeout
+
+    //     // Service URLs
+    //     PUBLIC_URL: process.env.PUBLIC_URL || 'https://your-domain.com',
+    //     AI_SERVICE_URL: process.env.AI_SERVICE_URL || 'https://your-ai-service.com',
+    //     DISPATCH_SERVICE_URL: process.env.DISPATCH_SERVICE_URL || 'https://your-dispatch-service.com',
+    //   },
+    //   logRetention: logs.RetentionDays.ONE_MONTH,
+    // });
+
+    // 添加调试日志
+    const entryPath = path.resolve(__dirname, "../../agent/lambda-handler.ts");
+    const tsconfigPath = path.resolve(__dirname, "../../agent/tsconfig.json");
+    const projectRootPath = path.resolve(__dirname, "../../agent");
+
+    console.log('=== CDK NodejsFunction 调试信息 ===');
+    console.log('当前工作目录 (process.cwd()):', process.cwd());
+    console.log('Stack文件目录 (__dirname):', __dirname);
+    console.log('Entry文件路径:', entryPath);
+    console.log('Entry文件存在:', require('fs').existsSync(entryPath));
+    console.log('TSConfig路径:', tsconfigPath);
+    console.log('TSConfig存在:', require('fs').existsSync(tsconfigPath));
+    console.log('项目根目录:', projectRootPath);
+    console.log('项目根目录存在:', require('fs').existsSync(projectRootPath));
+    console.log('================================');
+
+    this.agentFunction = new NodejsFunction(this, 'AgentFunction', {
+      functionName: 'dispatch-agent-react-agent-v2',
       description: 'React Agent for handling general service inquiries and bookings',
+
+      // 入口文件：建议用 .ts；如果你现在是 .js 也可以，改成 .js 即可
+      entry: entryPath,
+      handler: 'handler',                       // 源码里要导出同名的 handler
+
       runtime: lambda.Runtime.NODEJS_20_X,
       architecture: lambda.Architecture.ARM_64,
-      handler: 'lambda-handler.handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../agent/dist'), {
-        exclude: [
-          'src',
-          'test',
-          '*.ts',
-          '*.md',
-          'tsconfig.json',
-          'node_modules',
-        ],
-      }),
-      memorySize: 1024, // Increased memory for ML workloads
-      timeout: cdk.Duration.minutes(5), // Longer timeout for agent processing
-      // Remove reserved concurrency to avoid account limits for development
+      memorySize: 1024,
+      timeout: cdk.Duration.minutes(5),
+
+      // 原有网络与权限保持
       vpc,
-      vpcSubnets: {
-        subnets: vpc.privateSubnets,
-      },
+      vpcSubnets: { subnets: vpc.privateSubnets },
       securityGroups: [securityGroup],
       role: agentLambdaExecutionRole,
+
       environment: {
         NODE_ENV: 'production',
+        NODE_OPTIONS: '--enable-source-maps',   // 便于线上报错回溯到源码
 
-        // Redis configuration
+        // Redis
         REDIS_HOST: redisEndpoint,
         REDIS_PORT: '6379',
         REDIS_PASSWORD: process.env.REDIS_PASSWORD || '',
         REDIS_DB: '0',
 
-        // DynamoDB configuration
+        // DynamoDB
         DYNAMODB_TABLE_NAMES: tableNames,
         USERS_TABLE_NAME: 'Telephony-Users',
         CALLLOGS_TABLE_NAME: 'Telephony-CallLogs',
@@ -186,49 +269,84 @@ export class AgentLambdaStack extends cdk.Stack {
         TRANSCRIPT_CHUNKS_TABLE_NAME: 'Telephony-TranscriptChunks',
         TRANSCRIPTS_TABLE_NAME: 'Telephony-Transcripts',
 
-        // S3 configuration
+        // S3
         S3_BUCKET: s3BucketName,
 
-        // Bedrock configuration
+        // Bedrock
         BEDROCK_AWS_REGION: this.region,
         PRIMARY_MODEL: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
         FALLBACK_MODEL: 'anthropic.claude-3-haiku-20240307-v1:0',
 
-        // LangSmith configuration (API key from Parameter Store)
+        // LangSmith
         LANGSMITH_PROJECT: 'dispatch-agent-react-agent',
         LANGSMITH_TRACING: 'true',
         LANGSMITH_API_KEY_PARAM: langsmithApiKeyParam.parameterName,
 
-        // Agent configuration
+        // Agent
         AGENT_MAX_ITERATIONS: '10',
-        AGENT_TIMEOUT_SECONDS: '280', // Leave buffer for Lambda timeout
+        AGENT_TIMEOUT_SECONDS: '280',
 
         // Service URLs
         PUBLIC_URL: process.env.PUBLIC_URL || 'https://your-domain.com',
         AI_SERVICE_URL: process.env.AI_SERVICE_URL || 'https://your-ai-service.com',
         DISPATCH_SERVICE_URL: process.env.DISPATCH_SERVICE_URL || 'https://your-dispatch-service.com',
       },
+
       logRetention: logs.RetentionDays.ONE_MONTH,
+
+      // esbuild 打包配置
+      bundling: {
+        target: 'node20',
+        format: OutputFormat.CJS,   // 你的源码是 CJS/TS import 都可；默认也是 CJS
+        minify: true,
+        sourceMap: true,
+        logLevel: LogLevel.DEBUG,   // 打开 esbuild 详细日志
+        metafile: true,             // 生成 meta.json（记录打进包的每个文件）
+        tsconfig: tsconfigPath,
+        // 如果你在 agent/tsconfig.json 里使用了 baseUrl/paths，指向它
+        // tsconfig: path.join(__dirname, '../../agent/tsconfig.json'),
+
+        // 没有 Layer，就不要 external 掉常用库；让 esbuild 直接摇树打进包里
+        externalModules: [],
+
+        // 若依赖原生模块（如 sharp），可以这样声明：nodeModules: ['sharp']
+        // nodeModules: [],
+
+        // 强制使用本地 esbuild，不使用 Docker
+        forceDockerBundling: false,
+      },
+      // projectRoot: projectRootPath, // 暂时移除，避免依赖锁文件路径冲突
     });
 
+
     // Add Function URL for Agent Lambda
+    // this.agentFunctionUrl = this.agentFunction.addFunctionUrl({
+    //   authType: lambda.FunctionUrlAuthType.NONE,
+    //   cors: {
+    //     allowCredentials: false,
+    //     allowedHeaders: [
+    //       'Content-Type',
+    //       'Authorization',
+    //       'X-Request-ID',
+    //       'X-Session-ID',
+    //     ],
+    //     allowedMethods: [
+    //       lambda.HttpMethod.GET,
+    //       lambda.HttpMethod.POST,
+    //     ],
+    //     allowedOrigins: [
+    //       '*', // Allow all origins for now - restrict in production
+    //     ],
+    //     maxAge: cdk.Duration.minutes(5),
+    //   },
+    // });
     this.agentFunctionUrl = this.agentFunction.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
       cors: {
         allowCredentials: false,
-        allowedHeaders: [
-          'Content-Type',
-          'Authorization',
-          'X-Request-ID',
-          'X-Session-ID',
-        ],
-        allowedMethods: [
-          lambda.HttpMethod.GET,
-          lambda.HttpMethod.POST,
-        ],
-        allowedOrigins: [
-          '*', // Allow all origins for now - restrict in production
-        ],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'X-Session-ID'],
+        allowedMethods: [lambda.HttpMethod.GET, lambda.HttpMethod.POST],
+        allowedOrigins: ['*'],
         maxAge: cdk.Duration.minutes(5),
       },
     });

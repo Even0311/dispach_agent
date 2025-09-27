@@ -9,8 +9,9 @@
     "destroy": "pnpm --filter infra destroy"
   },
   "devDependencies": {
-    "typescript": "^5.3.3",
-    "@types/node": "^20.10.5"
+    "@types/node": "^20.10.5",
+    "esbuild": "^0.25.10",
+    "typescript": "^5.3.3"
   },
   "engines": {
     "node": ">=20.0.0"

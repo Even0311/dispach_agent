@@ -1,0 +1,954 @@
+{
+ "Description": "Telephony Lambda functions with Function URLs for Twilio webhooks",
+ "Resources": {
+  "TelephonyDependenciesLayer2297584E": {
+   "Type": "AWS::Lambda::LayerVersion",
+   "Properties": {
+    "CompatibleArchitectures": [
+     "arm64"
+    ],
+    "CompatibleRuntimes": [
+     "nodejs20.x"
+    ],
+    "Content": {
+     "S3Bucket": "cdk-hnb659fds-assets-997575969210-ap-southeast-2",
+     "S3Key": "0c252229968fe370ea77249396870541afb07e9ce548c9e43bb6216e720a70ad.zip"
+    },
+    "Description": "Shared dependencies for telephony Lambda functions (Twilio, AWS SDK, etc.)",
+    "LayerName": "telephony-dependencies-v2"
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/TelephonyDependenciesLayer/Resource",
+    "aws:asset:path": "asset.0c252229968fe370ea77249396870541afb07e9ce548c9e43bb6216e720a70ad",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Content"
+   }
+  },
+  "TelephonyLambdaRole3861F838": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+       ]
+      ]
+     }
+    ],
+    "Policies": [
+     {
+      "PolicyDocument": {
+       "Statement": [
+        {
+         "Action": [
+          "dynamodb:BatchGetItem",
+          "dynamodb:BatchWriteItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem"
+         ],
+         "Effect": "Allow",
+         "Resource": [
+          "arn:aws:dynamodb:ap-southeast-2:997575969210:table/Telephony-*",
+          "arn:aws:dynamodb:ap-southeast-2:997575969210:table/Telephony-*/index/*"
+         ]
+        }
+       ],
+       "Version": "2012-10-17"
+      },
+      "PolicyName": "DynamoDBAccess"
+     },
+     {
+      "PolicyDocument": {
+       "Statement": [
+        {
+         "Action": [
+          "s3:DeleteObject",
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:PutObject"
+         ],
+         "Effect": "Allow",
+         "Resource": [
+          "arn:aws:s3:::telephony-storage-997575969210-ap-southeast-2",
+          "arn:aws:s3:::telephony-storage-997575969210-ap-southeast-2/*"
+         ]
+        }
+       ],
+       "Version": "2012-10-17"
+      },
+      "PolicyName": "S3Access"
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/TelephonyLambdaRole/Resource"
+   }
+  },
+  "GatherHandler33762881": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-997575969210-ap-southeast-2",
+     "S3Key": "d9e4b3fc2b99cda76eeb6cab9094d16456a5d5db7bab3f2f409c206060489390.zip"
+    },
+    "Description": "Handles Twilio gather webhook calls",
+    "Environment": {
+     "Variables": {
+      "NODE_ENV": "production",
+      "REDIS_HOST": {
+       "Fn::ImportValue": "Telephony-RedisEndpoint"
+      },
+      "REDIS_PORT": "6379",
+      "S3_BUCKET": {
+       "Fn::ImportValue": "Telephony-S3BucketName"
+      },
+      "DYNAMODB_TABLE_NAMES": {
+       "Fn::ImportValue": "Telephony-TableNames"
+      },
+      "AI_SERVICE_URL": "https://your-ai-service.com",
+      "DISPATCH_SERVICE_URL": "https://your-dispatch-service.com",
+      "GATHER_HANDLER_URL": "https://ekpbh6hbruzol2to2zycnret3u0oftrk.lambda-url.ap-southeast-2.on.aws/"
+     }
+    },
+    "FunctionName": "telephony-gather-handler",
+    "Handler": "gather-handler/index.handler",
+    "Layers": [
+     {
+      "Ref": "TelephonyDependenciesLayer2297584E"
+     }
+    ],
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "TelephonyLambdaRole3861F838",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "Timeout": 30,
+    "VpcConfig": {
+     "SecurityGroupIds": [
+      {
+       "Fn::ImportValue": "Telephony-LambdaSecurityGroupId"
+      }
+     ],
+     "SubnetIds": {
+      "Fn::Split": [
+       ",",
+       {
+        "Fn::ImportValue": "Telephony-PrivateSubnetIds"
+       }
+      ]
+     }
+    }
+   },
+   "DependsOn": [
+    "TelephonyLambdaRole3861F838"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/GatherHandler/Resource",
+    "aws:asset:path": "asset.d9e4b3fc2b99cda76eeb6cab9094d16456a5d5db7bab3f2f409c206060489390",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "GatherHandlerLogRetention7E9B3E31": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "GatherHandler33762881"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 7
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/GatherHandler/LogRetention/Resource"
+   }
+  },
+  "GatherHandlerFunctionUrl5F56AC14": {
+   "Type": "AWS::Lambda::Url",
+   "Properties": {
+    "AuthType": "NONE",
+    "Cors": {
+     "AllowCredentials": false,
+     "AllowHeaders": [
+      "*"
+     ],
+     "AllowMethods": [
+      "*"
+     ],
+     "AllowOrigins": [
+      "*"
+     ],
+     "MaxAge": 300
+    },
+    "TargetFunctionArn": {
+     "Fn::GetAtt": [
+      "GatherHandler33762881",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/GatherHandler/FunctionUrl/Resource"
+   }
+  },
+  "GatherHandlerinvokefunctionurlAD5B5B35": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunctionUrl",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "GatherHandler33762881",
+      "Arn"
+     ]
+    },
+    "FunctionUrlAuthType": "NONE",
+    "Principal": "*"
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/GatherHandler/invoke-function-url"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:DeleteRetentionPolicy",
+        "logs:PutRetentionPolicy"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+    "Roles": [
+     {
+      "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Handler": "index.handler",
+    "Runtime": "nodejs22.x",
+    "Timeout": 900,
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-997575969210-ap-southeast-2",
+     "S3Key": "2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d.zip"
+    },
+    "Role": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+      "Arn"
+     ]
+    },
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ]
+   },
+   "DependsOn": [
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource",
+    "aws:asset:path": "asset.2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "VoiceHandlerE91162FD": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-997575969210-ap-southeast-2",
+     "S3Key": "d9e4b3fc2b99cda76eeb6cab9094d16456a5d5db7bab3f2f409c206060489390.zip"
+    },
+    "Description": "Handles Twilio voice webhook calls - v5 with Environment Fix",
+    "Environment": {
+     "Variables": {
+      "NODE_ENV": "production",
+      "REDIS_HOST": {
+       "Fn::ImportValue": "Telephony-RedisEndpoint"
+      },
+      "REDIS_PORT": "6379",
+      "S3_BUCKET": {
+       "Fn::ImportValue": "Telephony-S3BucketName"
+      },
+      "DYNAMODB_TABLE_NAMES": {
+       "Fn::ImportValue": "Telephony-TableNames"
+      },
+      "AI_SERVICE_URL": "https://your-ai-service.com",
+      "DISPATCH_SERVICE_URL": "https://your-dispatch-service.com",
+      "GATHER_HANDLER_URL": {
+       "Fn::GetAtt": [
+        "GatherHandlerFunctionUrl5F56AC14",
+        "FunctionUrl"
+       ]
+      }
+     }
+    },
+    "FunctionName": "telephony-voice-handler",
+    "Handler": "voice-handler/index.handler",
+    "Layers": [
+     {
+      "Ref": "TelephonyDependenciesLayer2297584E"
+     }
+    ],
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "TelephonyLambdaRole3861F838",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "Timeout": 30,
+    "VpcConfig": {
+     "SecurityGroupIds": [
+      {
+       "Fn::ImportValue": "Telephony-LambdaSecurityGroupId"
+      }
+     ],
+     "SubnetIds": {
+      "Fn::Split": [
+       ",",
+       {
+        "Fn::ImportValue": "Telephony-PrivateSubnetIds"
+       }
+      ]
+     }
+    }
+   },
+   "DependsOn": [
+    "TelephonyLambdaRole3861F838"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/VoiceHandler/Resource",
+    "aws:asset:path": "asset.d9e4b3fc2b99cda76eeb6cab9094d16456a5d5db7bab3f2f409c206060489390",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "VoiceHandlerLogRetention1FD408D7": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "VoiceHandlerE91162FD"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 7
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/VoiceHandler/LogRetention/Resource"
+   }
+  },
+  "VoiceHandlerFunctionUrl14032B5F": {
+   "Type": "AWS::Lambda::Url",
+   "Properties": {
+    "AuthType": "NONE",
+    "Cors": {
+     "AllowCredentials": false,
+     "AllowHeaders": [
+      "*"
+     ],
+     "AllowMethods": [
+      "*"
+     ],
+     "AllowOrigins": [
+      "*"
+     ],
+     "MaxAge": 300
+    },
+    "TargetFunctionArn": {
+     "Fn::GetAtt": [
+      "VoiceHandlerE91162FD",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/VoiceHandler/FunctionUrl/Resource"
+   }
+  },
+  "VoiceHandlerinvokefunctionurl772C0696": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunctionUrl",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "VoiceHandlerE91162FD",
+      "Arn"
+     ]
+    },
+    "FunctionUrlAuthType": "NONE",
+    "Principal": "*"
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/VoiceHandler/invoke-function-url"
+   }
+  },
+  "StatusHandler849210EB": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-997575969210-ap-southeast-2",
+     "S3Key": "d9e4b3fc2b99cda76eeb6cab9094d16456a5d5db7bab3f2f409c206060489390.zip"
+    },
+    "Description": "Handles Twilio status callback calls",
+    "Environment": {
+     "Variables": {
+      "NODE_ENV": "production",
+      "REDIS_HOST": {
+       "Fn::ImportValue": "Telephony-RedisEndpoint"
+      },
+      "REDIS_PORT": "6379",
+      "S3_BUCKET": {
+       "Fn::ImportValue": "Telephony-S3BucketName"
+      },
+      "DYNAMODB_TABLE_NAMES": {
+       "Fn::ImportValue": "Telephony-TableNames"
+      },
+      "AI_SERVICE_URL": "https://your-ai-service.com",
+      "DISPATCH_SERVICE_URL": "https://your-dispatch-service.com"
+     }
+    },
+    "FunctionName": "telephony-status-handler",
+    "Handler": "status-handler/index.handler",
+    "Layers": [
+     {
+      "Ref": "TelephonyDependenciesLayer2297584E"
+     }
+    ],
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "TelephonyLambdaRole3861F838",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "Timeout": 30,
+    "VpcConfig": {
+     "SecurityGroupIds": [
+      {
+       "Fn::ImportValue": "Telephony-LambdaSecurityGroupId"
+      }
+     ],
+     "SubnetIds": {
+      "Fn::Split": [
+       ",",
+       {
+        "Fn::ImportValue": "Telephony-PrivateSubnetIds"
+       }
+      ]
+     }
+    }
+   },
+   "DependsOn": [
+    "TelephonyLambdaRole3861F838"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/StatusHandler/Resource",
+    "aws:asset:path": "asset.d9e4b3fc2b99cda76eeb6cab9094d16456a5d5db7bab3f2f409c206060489390",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "StatusHandlerLogRetention727F4F59": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "StatusHandler849210EB"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 7
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/StatusHandler/LogRetention/Resource"
+   }
+  },
+  "StatusHandlerFunctionUrlCBE708A6": {
+   "Type": "AWS::Lambda::Url",
+   "Properties": {
+    "AuthType": "NONE",
+    "Cors": {
+     "AllowCredentials": false,
+     "AllowHeaders": [
+      "*"
+     ],
+     "AllowMethods": [
+      "*"
+     ],
+     "AllowOrigins": [
+      "*"
+     ],
+     "MaxAge": 300
+    },
+    "TargetFunctionArn": {
+     "Fn::GetAtt": [
+      "StatusHandler849210EB",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/StatusHandler/FunctionUrl/Resource"
+   }
+  },
+  "StatusHandlerinvokefunctionurl1358DDA6": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunctionUrl",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "StatusHandler849210EB",
+      "Arn"
+     ]
+    },
+    "FunctionUrlAuthType": "NONE",
+    "Principal": "*"
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/StatusHandler/invoke-function-url"
+   }
+  },
+  "VoiceErrorAlarmF0431FF5": {
+   "Type": "AWS::CloudWatch::Alarm",
+   "Properties": {
+    "AlarmDescription": "Voice Handler error rate too high",
+    "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+    "Dimensions": [
+     {
+      "Name": "FunctionName",
+      "Value": {
+       "Ref": "VoiceHandlerE91162FD"
+      }
+     }
+    ],
+    "EvaluationPeriods": 2,
+    "MetricName": "Errors",
+    "Namespace": "AWS/Lambda",
+    "Period": 300,
+    "Statistic": "Sum",
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "Threshold": 3
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/VoiceErrorAlarm/Resource"
+   }
+  },
+  "GatherErrorAlarm5A5C83DC": {
+   "Type": "AWS::CloudWatch::Alarm",
+   "Properties": {
+    "AlarmDescription": "Gather Handler error rate too high",
+    "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+    "Dimensions": [
+     {
+      "Name": "FunctionName",
+      "Value": {
+       "Ref": "GatherHandler33762881"
+      }
+     }
+    ],
+    "EvaluationPeriods": 2,
+    "MetricName": "Errors",
+    "Namespace": "AWS/Lambda",
+    "Period": 300,
+    "Statistic": "Sum",
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "Threshold": 3
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/GatherErrorAlarm/Resource"
+   }
+  },
+  "StatusErrorAlarmC245F74B": {
+   "Type": "AWS::CloudWatch::Alarm",
+   "Properties": {
+    "AlarmDescription": "Status Handler error rate too high",
+    "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+    "Dimensions": [
+     {
+      "Name": "FunctionName",
+      "Value": {
+       "Ref": "StatusHandler849210EB"
+      }
+     }
+    ],
+    "EvaluationPeriods": 2,
+    "MetricName": "Errors",
+    "Namespace": "AWS/Lambda",
+    "Period": 300,
+    "Statistic": "Sum",
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "Threshold": 3
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/StatusErrorAlarm/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/1WNzU7DMBCEn6V3ZyGp+gAtEqdKVKngWm2dJbjxD/KuiarI747sFgSn+fZnZjro2g08rnDmRg9TY80ZlqOgnhTOfFosuvOAsOzxSvGNIpvg1dO7/zc/J6/lfvjlH3iNtuzvcqDoDBdXVrw+ITMJw7aI4jXskp5IdsikDDpY+mCp2KoegjX6WlMqZWXDyLAPY09CvrZqG9Iwo+gPWLYWoyvvFXJWteYoOBo/qp44pKhv8X/4Jclnkqx8GAgu/PDVddBuoF1d2JgmJi/GEfQ3/QYDVUH7PwEAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyLambdasStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "VoiceHandlerUrl": {
+   "Description": "Voice Handler Function URL for Twilio Voice webhook",
+   "Value": {
+    "Fn::GetAtt": [
+     "VoiceHandlerFunctionUrl14032B5F",
+     "FunctionUrl"
+    ]
+   }
+  },
+  "GatherHandlerUrl": {
+   "Description": "Gather Handler Function URL for Twilio Gather webhook",
+   "Value": {
+    "Fn::GetAtt": [
+     "GatherHandlerFunctionUrl5F56AC14",
+     "FunctionUrl"
+    ]
+   }
+  },
+  "StatusHandlerUrl": {
+   "Description": "Status Handler Function URL for Twilio Status callback",
+   "Value": {
+    "Fn::GetAtt": [
+     "StatusHandlerFunctionUrlCBE708A6",
+     "FunctionUrl"
+    ]
+   }
+  },
+  "TwilioWebhookConfiguration": {
+   "Description": "All webhook URLs for Twilio configuration",
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "{\"voiceUrl\":\"",
+      {
+       "Fn::GetAtt": [
+        "VoiceHandlerFunctionUrl14032B5F",
+        "FunctionUrl"
+       ]
+      },
+      "\",\"gatherUrl\":\"",
+      {
+       "Fn::GetAtt": [
+        "GatherHandlerFunctionUrl5F56AC14",
+        "FunctionUrl"
+       ]
+      },
+      "\",\"statusCallbackUrl\":\"",
+      {
+       "Fn::GetAtt": [
+        "StatusHandlerFunctionUrlCBE708A6",
+        "FunctionUrl"
+       ]
+      },
+      "\"}"
+     ]
+    ]
+   }
+  },
+  "DeployedFunctions": {
+   "Description": "Deployed Lambda function names",
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "{\"voiceHandler\":\"",
+      {
+       "Ref": "VoiceHandlerE91162FD"
+      },
+      "\",\"gatherHandler\":\"",
+      {
+       "Ref": "GatherHandler33762881"
+      },
+      "\",\"statusHandler\":\"",
+      {
+       "Ref": "StatusHandler849210EB"
+      },
+      "\"}"
+     ]
+    ]
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

@@ -1,4 +1,4 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
+import { LambdaFunctionURLEvent, LambdaFunctionURLResult, Context } from 'aws-lambda';
 import { GeneralServiceReactAgent } from './src/react-agent/agent';
 import { AgentRequest, AgentResponse } from './src/react-agent/types';
 import { SSMClient, GetParameterCommand } from '@aws-sdk/client-ssm';
@@ -87,7 +87,7 @@ const createResponse = (
   statusCode: number,
   body: any,
   headers?: Record<string, string>
-): APIGatewayProxyResult => {
+): LambdaFunctionURLResult => {
   return {
     statusCode,
     headers: {
@@ -136,9 +136,9 @@ const validateRequest = (body: any): AgentRequest | null => {
  * Main Lambda handler
  */
 export const handler = async (
-  event: APIGatewayProxyEvent,
+  event: LambdaFunctionURLEvent,
   context: Context
-): Promise<APIGatewayProxyResult> => {
+): Promise<LambdaFunctionURLResult> => {
   const requestId = context.awsRequestId;
   const startTime = Date.now();
 
@@ -146,22 +146,22 @@ export const handler = async (
   process.env.AWS_REQUEST_ID = requestId;
 
   console.log(`[${requestId}] Processing request`, {
-    httpMethod: event.httpMethod,
-    path: event.path,
-    userAgent: event.headers['User-Agent'],
-    sourceIp: event.requestContext.identity.sourceIp,
+    httpMethod: event.requestContext.http.method,
+    path: event.requestContext.http.path,
+    userAgent: event.headers?.['user-agent'] || 'unknown',
+    sourceIp: event.requestContext.http.sourceIp || 'unknown',
     remainingTimeInMillis: context.getRemainingTimeInMillis(),
   });
 
   try {
     // Handle CORS preflight requests
-    if (event.httpMethod === 'OPTIONS') {
+    if (event.requestContext.http.method === 'OPTIONS') {
       console.log(`[${requestId}] Handling CORS preflight request`);
       return createResponse(200, { message: 'CORS preflight successful' });
     }
 
     // Handle health check requests
-    if (event.httpMethod === 'GET' && (event.path === '/health' || event.path === '/')) {
+    if (event.requestContext.http.method === 'GET' && (event.requestContext.http.path === '/health' || event.requestContext.http.path === '/')) {
       console.log(`[${requestId}] Handling health check request`);
 
       try {
@@ -192,7 +192,7 @@ export const handler = async (
     }
 
     // Handle agent query requests
-    if (event.httpMethod === 'POST') {
+    if (event.requestContext.http.method === 'POST') {
       let body: any;
 
       try {
@@ -267,10 +267,10 @@ export const handler = async (
     }
 
     // Handle unsupported HTTP methods
-    console.warn(`[${requestId}] Unsupported HTTP method: ${event.httpMethod}`);
+    console.warn(`[${requestId}] Unsupported HTTP method: ${event.requestContext.http.method}`);
     return createResponse(405, {
       error: 'Method not allowed',
-      message: `HTTP method ${event.httpMethod} is not supported`,
+      message: `HTTP method ${event.requestContext.http.method} is not supported`,
       allowed_methods: ['GET', 'POST', 'OPTIONS'],
       request_id: requestId,
     });
@@ -312,5 +312,5 @@ process.on('SIGTERM', () => {
 });
 
 // Export for local testing
-export { GeneralServiceReactAgent } from './src/react-agent/agent';
-export * from './src/react-agent/types';
+// export { GeneralServiceReactAgent } from './src/react-agent/agent';
+// export * from './src/react-agent/types';

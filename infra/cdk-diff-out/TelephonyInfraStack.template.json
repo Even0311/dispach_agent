@@ -1,0 +1,1716 @@
+{
+ "Description": "Minimal infrastructure stack for telephony system (VPC, Redis, DynamoDB, S3)",
+ "Resources": {
+  "MinimalVpc7288ABAC": {
+   "Type": "AWS::EC2::VPC",
+   "Properties": {
+    "CidrBlock": "10.0.0.0/16",
+    "EnableDnsHostnames": true,
+    "EnableDnsSupport": true,
+    "InstanceTenancy": "default",
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Name",
+      "Value": "TelephonyInfraStack/MinimalVpc"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/Resource"
+   }
+  },
+  "MinimalVpcPublicSubnet1Subnet0E7C45D3": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "ap-southeast-2a",
+    "CidrBlock": "10.0.0.0/24",
+    "MapPublicIpOnLaunch": true,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "Public"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Public"
+     },
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Name",
+      "Value": "TelephonyInfraStack/MinimalVpc/PublicSubnet1"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MinimalVpc7288ABAC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/PublicSubnet1/Subnet"
+   }
+  },
+  "MinimalVpcPublicSubnet1RouteTable6DF27CE2": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Name",
+      "Value": "TelephonyInfraStack/MinimalVpc/PublicSubnet1"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MinimalVpc7288ABAC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/PublicSubnet1/RouteTable"
+   }
+  },
+  "MinimalVpcPublicSubnet1RouteTableAssociation65D1B71B": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "MinimalVpcPublicSubnet1RouteTable6DF27CE2"
+    },
+    "SubnetId": {
+     "Ref": "MinimalVpcPublicSubnet1Subnet0E7C45D3"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/PublicSubnet1/RouteTableAssociation"
+   }
+  },
+  "MinimalVpcPublicSubnet1DefaultRoute01478377": {
+   "Type": "AWS::EC2::Route",
+   "Properties": {
+    "DestinationCidrBlock": "0.0.0.0/0",
+    "GatewayId": {
+     "Ref": "MinimalVpcIGW69DC4C40"
+    },
+    "RouteTableId": {
+     "Ref": "MinimalVpcPublicSubnet1RouteTable6DF27CE2"
+    }
+   },
+   "DependsOn": [
+    "MinimalVpcVPCGW469D1B20"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/PublicSubnet1/DefaultRoute"
+   }
+  },
+  "MinimalVpcPublicSubnet1EIP7DFCA85D": {
+   "Type": "AWS::EC2::EIP",
+   "Properties": {
+    "Domain": "vpc",
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Name",
+      "Value": "TelephonyInfraStack/MinimalVpc/PublicSubnet1"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/PublicSubnet1/EIP"
+   }
+  },
+  "MinimalVpcPublicSubnet1NATGatewayCD17CEDC": {
+   "Type": "AWS::EC2::NatGateway",
+   "Properties": {
+    "AllocationId": {
+     "Fn::GetAtt": [
+      "MinimalVpcPublicSubnet1EIP7DFCA85D",
+      "AllocationId"
+     ]
+    },
+    "SubnetId": {
+     "Ref": "MinimalVpcPublicSubnet1Subnet0E7C45D3"
+    },
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Name",
+      "Value": "TelephonyInfraStack/MinimalVpc/PublicSubnet1"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ]
+   },
+   "DependsOn": [
+    "MinimalVpcPublicSubnet1DefaultRoute01478377",
+    "MinimalVpcPublicSubnet1RouteTableAssociation65D1B71B"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/PublicSubnet1/NATGateway"
+   }
+  },
+  "MinimalVpcPublicSubnet2SubnetFEFA8FA1": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "ap-southeast-2b",
+    "CidrBlock": "10.0.1.0/24",
+    "MapPublicIpOnLaunch": true,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "Public"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Public"
+     },
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Name",
+      "Value": "TelephonyInfraStack/MinimalVpc/PublicSubnet2"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MinimalVpc7288ABAC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/PublicSubnet2/Subnet"
+   }
+  },
+  "MinimalVpcPublicSubnet2RouteTable98C473A1": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Name",
+      "Value": "TelephonyInfraStack/MinimalVpc/PublicSubnet2"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MinimalVpc7288ABAC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/PublicSubnet2/RouteTable"
+   }
+  },
+  "MinimalVpcPublicSubnet2RouteTableAssociation8C341291": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "MinimalVpcPublicSubnet2RouteTable98C473A1"
+    },
+    "SubnetId": {
+     "Ref": "MinimalVpcPublicSubnet2SubnetFEFA8FA1"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/PublicSubnet2/RouteTableAssociation"
+   }
+  },
+  "MinimalVpcPublicSubnet2DefaultRouteBC76E617": {
+   "Type": "AWS::EC2::Route",
+   "Properties": {
+    "DestinationCidrBlock": "0.0.0.0/0",
+    "GatewayId": {
+     "Ref": "MinimalVpcIGW69DC4C40"
+    },
+    "RouteTableId": {
+     "Ref": "MinimalVpcPublicSubnet2RouteTable98C473A1"
+    }
+   },
+   "DependsOn": [
+    "MinimalVpcVPCGW469D1B20"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/PublicSubnet2/DefaultRoute"
+   }
+  },
+  "MinimalVpcPrivateAppSubnet1Subnet5D76BB1E": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "ap-southeast-2a",
+    "CidrBlock": "10.0.2.0/24",
+    "MapPublicIpOnLaunch": false,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "Private-App"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Private"
+     },
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Name",
+      "Value": "TelephonyInfraStack/MinimalVpc/Private-AppSubnet1"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MinimalVpc7288ABAC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/Private-AppSubnet1/Subnet"
+   }
+  },
+  "MinimalVpcPrivateAppSubnet1RouteTable9D982492": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Name",
+      "Value": "TelephonyInfraStack/MinimalVpc/Private-AppSubnet1"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MinimalVpc7288ABAC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/Private-AppSubnet1/RouteTable"
+   }
+  },
+  "MinimalVpcPrivateAppSubnet1RouteTableAssociation0DE097A8": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "MinimalVpcPrivateAppSubnet1RouteTable9D982492"
+    },
+    "SubnetId": {
+     "Ref": "MinimalVpcPrivateAppSubnet1Subnet5D76BB1E"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/Private-AppSubnet1/RouteTableAssociation"
+   }
+  },
+  "MinimalVpcPrivateAppSubnet1DefaultRouteD7B88962": {
+   "Type": "AWS::EC2::Route",
+   "Properties": {
+    "DestinationCidrBlock": "0.0.0.0/0",
+    "NatGatewayId": {
+     "Ref": "MinimalVpcPublicSubnet1NATGatewayCD17CEDC"
+    },
+    "RouteTableId": {
+     "Ref": "MinimalVpcPrivateAppSubnet1RouteTable9D982492"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/Private-AppSubnet1/DefaultRoute"
+   }
+  },
+  "MinimalVpcPrivateAppSubnet2Subnet7A8ADB18": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "ap-southeast-2b",
+    "CidrBlock": "10.0.3.0/24",
+    "MapPublicIpOnLaunch": false,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "Private-App"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Private"
+     },
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Name",
+      "Value": "TelephonyInfraStack/MinimalVpc/Private-AppSubnet2"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MinimalVpc7288ABAC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/Private-AppSubnet2/Subnet"
+   }
+  },
+  "MinimalVpcPrivateAppSubnet2RouteTable7C581FF7": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Name",
+      "Value": "TelephonyInfraStack/MinimalVpc/Private-AppSubnet2"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MinimalVpc7288ABAC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/Private-AppSubnet2/RouteTable"
+   }
+  },
+  "MinimalVpcPrivateAppSubnet2RouteTableAssociationA595B2D5": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "MinimalVpcPrivateAppSubnet2RouteTable7C581FF7"
+    },
+    "SubnetId": {
+     "Ref": "MinimalVpcPrivateAppSubnet2Subnet7A8ADB18"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/Private-AppSubnet2/RouteTableAssociation"
+   }
+  },
+  "MinimalVpcPrivateAppSubnet2DefaultRoute6D5555A9": {
+   "Type": "AWS::EC2::Route",
+   "Properties": {
+    "DestinationCidrBlock": "0.0.0.0/0",
+    "NatGatewayId": {
+     "Ref": "MinimalVpcPublicSubnet1NATGatewayCD17CEDC"
+    },
+    "RouteTableId": {
+     "Ref": "MinimalVpcPrivateAppSubnet2RouteTable7C581FF7"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/Private-AppSubnet2/DefaultRoute"
+   }
+  },
+  "MinimalVpcPrivateDBSubnet1Subnet6EAFD116": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "ap-southeast-2a",
+    "CidrBlock": "10.0.4.0/26",
+    "MapPublicIpOnLaunch": false,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "Private-DB"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Isolated"
+     },
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Name",
+      "Value": "TelephonyInfraStack/MinimalVpc/Private-DBSubnet1"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MinimalVpc7288ABAC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/Private-DBSubnet1/Subnet"
+   }
+  },
+  "MinimalVpcPrivateDBSubnet1RouteTable433E5634": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Name",
+      "Value": "TelephonyInfraStack/MinimalVpc/Private-DBSubnet1"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MinimalVpc7288ABAC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/Private-DBSubnet1/RouteTable"
+   }
+  },
+  "MinimalVpcPrivateDBSubnet1RouteTableAssociation4FED7812": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "MinimalVpcPrivateDBSubnet1RouteTable433E5634"
+    },
+    "SubnetId": {
+     "Ref": "MinimalVpcPrivateDBSubnet1Subnet6EAFD116"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/Private-DBSubnet1/RouteTableAssociation"
+   }
+  },
+  "MinimalVpcPrivateDBSubnet2Subnet40CBBC2B": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "ap-southeast-2b",
+    "CidrBlock": "10.0.4.64/26",
+    "MapPublicIpOnLaunch": false,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "Private-DB"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Isolated"
+     },
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Name",
+      "Value": "TelephonyInfraStack/MinimalVpc/Private-DBSubnet2"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MinimalVpc7288ABAC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/Private-DBSubnet2/Subnet"
+   }
+  },
+  "MinimalVpcPrivateDBSubnet2RouteTable4C85CDDD": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Name",
+      "Value": "TelephonyInfraStack/MinimalVpc/Private-DBSubnet2"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MinimalVpc7288ABAC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/Private-DBSubnet2/RouteTable"
+   }
+  },
+  "MinimalVpcPrivateDBSubnet2RouteTableAssociation3EE5E69A": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "MinimalVpcPrivateDBSubnet2RouteTable4C85CDDD"
+    },
+    "SubnetId": {
+     "Ref": "MinimalVpcPrivateDBSubnet2Subnet40CBBC2B"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/Private-DBSubnet2/RouteTableAssociation"
+   }
+  },
+  "MinimalVpcIGW69DC4C40": {
+   "Type": "AWS::EC2::InternetGateway",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Name",
+      "Value": "TelephonyInfraStack/MinimalVpc"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/IGW"
+   }
+  },
+  "MinimalVpcVPCGW469D1B20": {
+   "Type": "AWS::EC2::VPCGatewayAttachment",
+   "Properties": {
+    "InternetGatewayId": {
+     "Ref": "MinimalVpcIGW69DC4C40"
+    },
+    "VpcId": {
+     "Ref": "MinimalVpc7288ABAC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/VPCGW"
+   }
+  },
+  "MinimalVpcRestrictDefaultSecurityGroupCustomResource8569B143": {
+   "Type": "Custom::VpcRestrictDefaultSG",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E",
+      "Arn"
+     ]
+    },
+    "DefaultSecurityGroupId": {
+     "Fn::GetAtt": [
+      "MinimalVpc7288ABAC",
+      "DefaultSecurityGroup"
+     ]
+    },
+    "Account": "997575969210"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/RestrictDefaultSecurityGroupCustomResource/Default"
+   }
+  },
+  "MinimalVpcDynamoDBEndpointEFE9CE7B": {
+   "Type": "AWS::EC2::VPCEndpoint",
+   "Properties": {
+    "RouteTableIds": [
+     {
+      "Ref": "MinimalVpcPrivateAppSubnet1RouteTable9D982492"
+     },
+     {
+      "Ref": "MinimalVpcPrivateAppSubnet2RouteTable7C581FF7"
+     }
+    ],
+    "ServiceName": {
+     "Fn::Join": [
+      "",
+      [
+       "com.amazonaws.",
+       {
+        "Ref": "AWS::Region"
+       },
+       ".dynamodb"
+      ]
+     ]
+    },
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Name",
+      "Value": "TelephonyInfraStack/MinimalVpc"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "VpcEndpointType": "Gateway",
+    "VpcId": {
+     "Ref": "MinimalVpc7288ABAC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/DynamoDBEndpoint/Resource"
+   }
+  },
+  "MinimalVpcS3Endpoint9874F2AE": {
+   "Type": "AWS::EC2::VPCEndpoint",
+   "Properties": {
+    "RouteTableIds": [
+     {
+      "Ref": "MinimalVpcPrivateAppSubnet1RouteTable9D982492"
+     },
+     {
+      "Ref": "MinimalVpcPrivateAppSubnet2RouteTable7C581FF7"
+     }
+    ],
+    "ServiceName": {
+     "Fn::Join": [
+      "",
+      [
+       "com.amazonaws.",
+       {
+        "Ref": "AWS::Region"
+       },
+       ".s3"
+      ]
+     ]
+    },
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Name",
+      "Value": "TelephonyInfraStack/MinimalVpc"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "VpcEndpointType": "Gateway",
+    "VpcId": {
+     "Ref": "MinimalVpc7288ABAC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/MinimalVpc/S3Endpoint/Resource"
+   }
+  },
+  "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Version": "2012-10-17",
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ]
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+     }
+    ],
+    "Policies": [
+     {
+      "PolicyName": "Inline",
+      "PolicyDocument": {
+       "Version": "2012-10-17",
+       "Statement": [
+        {
+         "Effect": "Allow",
+         "Action": [
+          "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:AuthorizeSecurityGroupEgress",
+          "ec2:RevokeSecurityGroupIngress",
+          "ec2:RevokeSecurityGroupEgress"
+         ],
+         "Resource": [
+          {
+           "Fn::Join": [
+            "",
+            [
+             "arn:aws:ec2:ap-southeast-2:997575969210:security-group/",
+             {
+              "Fn::GetAtt": [
+               "MinimalVpc7288ABAC",
+               "DefaultSecurityGroup"
+              ]
+             }
+            ]
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/Custom::VpcRestrictDefaultSGCustomResourceProvider/Role"
+   }
+  },
+  "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-997575969210-ap-southeast-2",
+     "S3Key": "7fa1e366ee8a9ded01fc355f704cff92bfd179574e6f9cfee800a3541df1b200.zip"
+    },
+    "Timeout": 900,
+    "MemorySize": 128,
+    "Handler": "__entrypoint__.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs22.x",
+    "Description": "Lambda function for removing all inbound/outbound rules from the VPC default security group"
+   },
+   "DependsOn": [
+    "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/Custom::VpcRestrictDefaultSGCustomResourceProvider/Handler",
+    "aws:asset:path": "asset.7fa1e366ee8a9ded01fc355f704cff92bfd179574e6f9cfee800a3541df1b200",
+    "aws:asset:property": "Code"
+   }
+  },
+  "RedisSecurityGroupB05951F6": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "Security group for Redis ElastiCache",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "255.255.255.255/32",
+      "Description": "Disallow all traffic",
+      "FromPort": 252,
+      "IpProtocol": "icmp",
+      "ToPort": 86
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MinimalVpc7288ABAC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/RedisSecurityGroup/Resource"
+   }
+  },
+  "RedisSecurityGroupfromTelephonyInfraStackLambdaSecurityGroup22F90B9F63795235D606": {
+   "Type": "AWS::EC2::SecurityGroupIngress",
+   "Properties": {
+    "Description": "Allow Lambda functions to connect to Redis",
+    "FromPort": 6379,
+    "GroupId": {
+     "Fn::GetAtt": [
+      "RedisSecurityGroupB05951F6",
+      "GroupId"
+     ]
+    },
+    "IpProtocol": "tcp",
+    "SourceSecurityGroupId": {
+     "Fn::GetAtt": [
+      "LambdaSecurityGroup0BD9FC99",
+      "GroupId"
+     ]
+    },
+    "ToPort": 6379
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/RedisSecurityGroup/from TelephonyInfraStackLambdaSecurityGroup22F90B9F:6379"
+   }
+  },
+  "LambdaSecurityGroup0BD9FC99": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "Security group for Lambda functions",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow all outbound traffic by default",
+      "IpProtocol": "-1"
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MinimalVpc7288ABAC"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/LambdaSecurityGroup/Resource"
+   }
+  },
+  "RedisSubnetGroup": {
+   "Type": "AWS::ElastiCache::SubnetGroup",
+   "Properties": {
+    "Description": "Subnet group for Redis",
+    "SubnetIds": [
+     {
+      "Ref": "MinimalVpcPrivateDBSubnet1Subnet6EAFD116"
+     },
+     {
+      "Ref": "MinimalVpcPrivateDBSubnet2Subnet40CBBC2B"
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/RedisSubnetGroup"
+   }
+  },
+  "RedisCluster": {
+   "Type": "AWS::ElastiCache::ReplicationGroup",
+   "Properties": {
+    "AtRestEncryptionEnabled": true,
+    "AutomaticFailoverEnabled": false,
+    "CacheNodeType": "cache.t3.micro",
+    "CacheSubnetGroupName": {
+     "Ref": "RedisSubnetGroup"
+    },
+    "Engine": "redis",
+    "EngineVersion": "7.0",
+    "NumCacheClusters": 1,
+    "Port": 6379,
+    "ReplicationGroupDescription": "Redis cluster for telephony sessions",
+    "ReplicationGroupId": "telephony-redis",
+    "SecurityGroupIds": [
+     {
+      "Fn::GetAtt": [
+       "RedisSecurityGroupB05951F6",
+       "GroupId"
+      ]
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ],
+    "TransitEncryptionEnabled": false
+   },
+   "DependsOn": [
+    "RedisSubnetGroup"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/RedisCluster"
+   }
+  },
+  "UsersTable9725E9C8": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "_id",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "twilioPhoneNumber",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "TwilioPhoneNumberIndex",
+      "KeySchema": [
+       {
+        "AttributeName": "twilioPhoneNumber",
+        "KeyType": "HASH"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "_id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "Telephony-Users",
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/UsersTable/Resource"
+   }
+  },
+  "CompaniesTable16712407": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "_id",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "user",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "UserIdIndex",
+      "KeySchema": [
+       {
+        "AttributeName": "user",
+        "KeyType": "HASH"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "_id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "Telephony-Companies",
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/CompaniesTable/Resource"
+   }
+  },
+  "ServicesTableF56E8DC5": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "_id",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "userId",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "UserIdIndex",
+      "KeySchema": [
+       {
+        "AttributeName": "userId",
+        "KeyType": "HASH"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "_id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "Telephony-Services",
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/ServicesTable/Resource"
+   }
+  },
+  "CallLogsTable03636C7A": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "_id",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "callSid",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "userId",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "CallSidIndex",
+      "KeySchema": [
+       {
+        "AttributeName": "callSid",
+        "KeyType": "HASH"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     },
+     {
+      "IndexName": "UserIdIndex",
+      "KeySchema": [
+       {
+        "AttributeName": "userId",
+        "KeyType": "HASH"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "_id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "Telephony-CallLogs",
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/CallLogsTable/Resource"
+   }
+  },
+  "TranscriptsTable936147D6": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "_id",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "callSid",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "CallSidIndex",
+      "KeySchema": [
+       {
+        "AttributeName": "callSid",
+        "KeyType": "HASH"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "_id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "Telephony-Transcripts",
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/TranscriptsTable/Resource"
+   }
+  },
+  "TranscriptChunksTable81CC3004": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "_id",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "transcriptId",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "TranscriptIdIndex",
+      "KeySchema": [
+       {
+        "AttributeName": "transcriptId",
+        "KeyType": "HASH"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "_id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "Telephony-TranscriptChunks",
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/TranscriptChunksTable/Resource"
+   }
+  },
+  "ServiceBookingsTable6A28076F": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "_id",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "callSid",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "userId",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "CallSidIndex",
+      "KeySchema": [
+       {
+        "AttributeName": "callSid",
+        "KeyType": "HASH"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     },
+     {
+      "IndexName": "UserIdIndex",
+      "KeySchema": [
+       {
+        "AttributeName": "userId",
+        "KeyType": "HASH"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "_id",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "Telephony-ServiceBookings",
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/ServiceBookingsTable/Resource"
+   }
+  },
+  "TelephonyBucketE0246191": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketEncryption": {
+     "ServerSideEncryptionConfiguration": [
+      {
+       "ServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+       }
+      }
+     ]
+    },
+    "BucketName": "telephony-storage-997575969210-ap-southeast-2",
+    "LifecycleConfiguration": {
+     "Rules": [
+      {
+       "Id": "CallRecordings",
+       "Prefix": "recordings/",
+       "Status": "Enabled",
+       "Transitions": [
+        {
+         "StorageClass": "STANDARD_IA",
+         "TransitionInDays": 30
+        },
+        {
+         "StorageClass": "GLACIER",
+         "TransitionInDays": 90
+        }
+       ]
+      }
+     ]
+    },
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "BlockPublicPolicy": true,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": true
+    },
+    "Tags": [
+     {
+      "Key": "CostCenter",
+      "Value": "AI-Telephony"
+     },
+     {
+      "Key": "Environment",
+      "Value": "Development"
+     },
+     {
+      "Key": "Project",
+      "Value": "TelephonySystem"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/TelephonyBucket/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/32QwW7CMAyGn4V7yEYnHgAQmrhsVTtxnVzXA0ObVLEDQlXffWqL2su0k39/+W35T2KT1dq+LuAuSyyvy4oL2+YKeDVwl++WMLHtsUGz+3HHdGfSWFSMeSwcac9mlfmo9AVFRTOf2UbEI4Oyd5O5F/tD2pcP0HdQusPDpIFvoDQvPjil4GgyjJc8u40q4Lkmp+ZJjg3uXdl4dvq0Tm1OGAPr4z342AxX/gsO7hRIpDNUgSgj4JlsO4WbhjJqKsYh28A6Uz4c1L4sbDt9yCA6I2+23Ua8jtFG1XUmI/ExIJldFPX13Pbb/3xKg79xSWELQmYjQpornNid+pnPqE3Uzjhfkr3Iyy1J7GptV4uLMC9DdMo12Wysv4/WQ6UDAgAA"
+   },
+   "Metadata": {
+    "aws:cdk:path": "TelephonyInfraStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "VpcId": {
+   "Description": "VPC ID for Lambda functions",
+   "Value": {
+    "Ref": "MinimalVpc7288ABAC"
+   },
+   "Export": {
+    "Name": "Telephony-VpcId"
+   }
+  },
+  "PrivateSubnetIds": {
+   "Description": "Private subnet IDs for Lambda functions",
+   "Value": {
+    "Fn::Join": [
+     ",",
+     [
+      {
+       "Ref": "MinimalVpcPrivateAppSubnet1Subnet5D76BB1E"
+      },
+      {
+       "Ref": "MinimalVpcPrivateAppSubnet2Subnet7A8ADB18"
+      }
+     ]
+    ]
+   },
+   "Export": {
+    "Name": "Telephony-PrivateSubnetIds"
+   }
+  },
+  "LambdaSecurityGroupId": {
+   "Description": "Security group ID for Lambda functions",
+   "Value": {
+    "Fn::GetAtt": [
+     "LambdaSecurityGroup0BD9FC99",
+     "GroupId"
+    ]
+   },
+   "Export": {
+    "Name": "Telephony-LambdaSecurityGroupId"
+   }
+  },
+  "RedisEndpoint": {
+   "Description": "Redis ElastiCache endpoint",
+   "Value": {
+    "Fn::GetAtt": [
+     "RedisCluster",
+     "PrimaryEndPoint.Address"
+    ]
+   },
+   "Export": {
+    "Name": "Telephony-RedisEndpoint"
+   }
+  },
+  "S3BucketName": {
+   "Description": "S3 storage bucket name",
+   "Value": {
+    "Ref": "TelephonyBucketE0246191"
+   },
+   "Export": {
+    "Name": "Telephony-S3BucketName"
+   }
+  },
+  "DynamoDBTableNames": {
+   "Description": "DynamoDB table names",
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "{\"users\":\"",
+      {
+       "Ref": "UsersTable9725E9C8"
+      },
+      "\",\"companies\":\"",
+      {
+       "Ref": "CompaniesTable16712407"
+      },
+      "\",\"services\":\"",
+      {
+       "Ref": "ServicesTableF56E8DC5"
+      },
+      "\",\"callLogs\":\"",
+      {
+       "Ref": "CallLogsTable03636C7A"
+      },
+      "\",\"transcripts\":\"",
+      {
+       "Ref": "TranscriptsTable936147D6"
+      },
+      "\",\"transcriptChunks\":\"",
+      {
+       "Ref": "TranscriptChunksTable81CC3004"
+      },
+      "\",\"serviceBookings\":\"",
+      {
+       "Ref": "ServiceBookingsTable6A28076F"
+      },
+      "\"}"
+     ]
+    ]
+   },
+   "Export": {
+    "Name": "Telephony-TableNames"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

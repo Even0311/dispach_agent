@@ -1,0 +1,36 @@
+{
+  "version": "48.0.0",
+  "files": {
+    "7fa1e366ee8a9ded01fc355f704cff92bfd179574e6f9cfee800a3541df1b200": {
+      "displayName": "TelephonyInfraStack/Custom::VpcRestrictDefaultSGCustomResourceProvider Code",
+      "source": {
+        "path": "asset.7fa1e366ee8a9ded01fc355f704cff92bfd179574e6f9cfee800a3541df1b200",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "997575969210-ap-southeast-2-a40a8a4c": {
+          "bucketName": "cdk-hnb659fds-assets-997575969210-ap-southeast-2",
+          "objectKey": "7fa1e366ee8a9ded01fc355f704cff92bfd179574e6f9cfee800a3541df1b200.zip",
+          "region": "ap-southeast-2",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::997575969210:role/cdk-hnb659fds-file-publishing-role-997575969210-ap-southeast-2"
+        }
+      }
+    },
+    "95e030cdf08ac5237447a55d17f33d85dec1ef875ad0d15639706f8f02223934": {
+      "displayName": "TelephonyInfraStack Template",
+      "source": {
+        "path": "TelephonyInfraStack.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "997575969210-ap-southeast-2-c3805afb": {
+          "bucketName": "cdk-hnb659fds-assets-997575969210-ap-southeast-2",
+          "objectKey": "95e030cdf08ac5237447a55d17f33d85dec1ef875ad0d15639706f8f02223934.json",
+          "region": "ap-southeast-2",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::997575969210:role/cdk-hnb659fds-file-publishing-role-997575969210-ap-southeast-2"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}

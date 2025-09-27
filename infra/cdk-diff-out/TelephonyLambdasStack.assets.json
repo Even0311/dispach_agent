@@ -1,0 +1,66 @@
+{
+  "version": "48.0.0",
+  "files": {
+    "0c252229968fe370ea77249396870541afb07e9ce548c9e43bb6216e720a70ad": {
+      "displayName": "TelephonyDependenciesLayer/Code",
+      "source": {
+        "path": "asset.0c252229968fe370ea77249396870541afb07e9ce548c9e43bb6216e720a70ad",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "997575969210-ap-southeast-2-de4d7ef5": {
+          "bucketName": "cdk-hnb659fds-assets-997575969210-ap-southeast-2",
+          "objectKey": "0c252229968fe370ea77249396870541afb07e9ce548c9e43bb6216e720a70ad.zip",
+          "region": "ap-southeast-2",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::997575969210:role/cdk-hnb659fds-file-publishing-role-997575969210-ap-southeast-2"
+        }
+      }
+    },
+    "d9e4b3fc2b99cda76eeb6cab9094d16456a5d5db7bab3f2f409c206060489390": {
+      "displayName": "GatherHandler/Code",
+      "source": {
+        "path": "asset.d9e4b3fc2b99cda76eeb6cab9094d16456a5d5db7bab3f2f409c206060489390",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "997575969210-ap-southeast-2-b7703d8e": {
+          "bucketName": "cdk-hnb659fds-assets-997575969210-ap-southeast-2",
+          "objectKey": "d9e4b3fc2b99cda76eeb6cab9094d16456a5d5db7bab3f2f409c206060489390.zip",
+          "region": "ap-southeast-2",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::997575969210:role/cdk-hnb659fds-file-publishing-role-997575969210-ap-southeast-2"
+        }
+      }
+    },
+    "2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d": {
+      "displayName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Code",
+      "source": {
+        "path": "asset.2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "997575969210-ap-southeast-2-07d3b89c": {
+          "bucketName": "cdk-hnb659fds-assets-997575969210-ap-southeast-2",
+          "objectKey": "2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d.zip",
+          "region": "ap-southeast-2",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::997575969210:role/cdk-hnb659fds-file-publishing-role-997575969210-ap-southeast-2"
+        }
+      }
+    },
+    "75a3261eb0ec587d28d0c0dfd7d2283dcbd50f53d9d70cf4c6f2990c48fd0668": {
+      "displayName": "TelephonyLambdasStack Template",
+      "source": {
+        "path": "TelephonyLambdasStack.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "997575969210-ap-southeast-2-2853cc36": {
+          "bucketName": "cdk-hnb659fds-assets-997575969210-ap-southeast-2",
+          "objectKey": "75a3261eb0ec587d28d0c0dfd7d2283dcbd50f53d9d70cf4c6f2990c48fd0668.json",
+          "region": "ap-southeast-2",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::997575969210:role/cdk-hnb659fds-file-publishing-role-997575969210-ap-southeast-2"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}
