@@ -116,6 +116,7 @@ export class AgentLambdaStack extends cdk.Stack {
                 `arn:aws:bedrock:${this.region}::foundation-model/anthropic.claude-*`,
                 `arn:aws:bedrock:${this.region}::foundation-model/amazon.titan-*`,
                 `arn:aws:bedrock:${this.region}::foundation-model/meta.llama-*`,
+                `arn:aws:bedrock:${this.region}::foundation-model/mistral.*`,
               ],
             }),
           ],
@@ -132,6 +133,8 @@ export class AgentLambdaStack extends cdk.Stack {
               resources: [
                 `arn:aws:ssm:${this.region}:${this.account}:parameter/dispatch-agent/*`,
                 `arn:aws:ssm:${this.region}:${this.account}:parameter/LANGSMITH-API-KEY`,
+                `arn:aws:ssm:${this.region}:${this.account}:parameter/CLAUDE_API_KEY`,
+                `arn:aws:ssm:${this.region}:${this.account}:parameter/AGENT_API_KEY`,
               ],
             }),
           ],
@@ -139,109 +142,44 @@ export class AgentLambdaStack extends cdk.Stack {
       },
     });
 
-    // Agent Lambda function configuration
-    // this.agentFunction = new lambda.Function(this, 'AgentFunction', {
-    //   functionName: 'dispatch-agent-react-agent',
-    //   description: 'React Agent for handling general service inquiries and bookings',
-    //   runtime: lambda.Runtime.NODEJS_20_X,
-    //   architecture: lambda.Architecture.ARM_64,
-    //   handler: 'dist/lambda-handler.handler',
-    //   code: lambda.Code.fromAsset(path.join(__dirname, '../../agent'), {
-    //     exclude: [
-    //       'test',
-    //       '*.ts',
-    //       '*.md',
-    //       'tsconfig.json',
-    //       '.claude',
-    //       'cdk.json',
-    //       // Include node_modules and compiled dist folder
-    //     ],
-    //   }),
-    //   memorySize: 1024, // Increased memory for ML workloads
-    //   timeout: cdk.Duration.minutes(5), // Longer timeout for agent processing
-    //   // Remove reserved concurrency to avoid account limits for development
-    //   vpc,
-    //   vpcSubnets: {
-    //     subnets: vpc.privateSubnets,
-    //   },
-    //   securityGroups: [securityGroup],
-    //   role: agentLambdaExecutionRole,
-    //   environment: {
-    //     NODE_ENV: 'production',
-
-    //     // Redis configuration
-    //     REDIS_HOST: redisEndpoint,
-    //     REDIS_PORT: '6379',
-    //     REDIS_PASSWORD: process.env.REDIS_PASSWORD || '',
-    //     REDIS_DB: '0',
-
-    //     // DynamoDB configuration
-    //     DYNAMODB_TABLE_NAMES: tableNames,
-    //     USERS_TABLE_NAME: 'Telephony-Users',
-    //     CALLLOGS_TABLE_NAME: 'Telephony-CallLogs',
-    //     COMPANIES_TABLE_NAME: 'Telephony-Companies',
-    //     SERVICE_BOOKINGS_TABLE_NAME: 'Telephony-ServiceBookings',
-    //     SERVICES_TABLE_NAME: 'Telephony-Services',
-    //     TRANSCRIPT_CHUNKS_TABLE_NAME: 'Telephony-TranscriptChunks',
-    //     TRANSCRIPTS_TABLE_NAME: 'Telephony-Transcripts',
-
-    //     // S3 configuration
-    //     S3_BUCKET: s3BucketName,
-
-    //     // Bedrock configuration
-    //     BEDROCK_AWS_REGION: this.region,
-    //     PRIMARY_MODEL: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
-    //     FALLBACK_MODEL: 'anthropic.claude-3-haiku-20240307-v1:0',
-
-    //     // LangSmith configuration (API key from Parameter Store)
-    //     LANGSMITH_PROJECT: 'dispatch-agent-react-agent',
-    //     LANGSMITH_TRACING: 'true',
-    //     LANGSMITH_API_KEY_PARAM: langsmithApiKeyParam.parameterName,
-
-    //     // Agent configuration
-    //     AGENT_MAX_ITERATIONS: '10',
-    //     AGENT_TIMEOUT_SECONDS: '280', // Leave buffer for Lambda timeout
-
-    //     // Service URLs
-    //     PUBLIC_URL: process.env.PUBLIC_URL || 'https://your-domain.com',
-    //     AI_SERVICE_URL: process.env.AI_SERVICE_URL || 'https://your-ai-service.com',
-    //     DISPATCH_SERVICE_URL: process.env.DISPATCH_SERVICE_URL || 'https://your-dispatch-service.com',
-    //   },
-    //   logRetention: logs.RetentionDays.ONE_MONTH,
-    // });
-
-    // 添加调试日志
     const entryPath = path.resolve(__dirname, "../../agent/lambda-handler.ts");
     const tsconfigPath = path.resolve(__dirname, "../../agent/tsconfig.json");
-    const projectRootPath = path.resolve(__dirname, "../../agent");
+    //const projectRootPath = path.resolve(__dirname, "../../agent");
 
-    console.log('=== CDK NodejsFunction 调试信息 ===');
-    console.log('当前工作目录 (process.cwd()):', process.cwd());
-    console.log('Stack文件目录 (__dirname):', __dirname);
-    console.log('Entry文件路径:', entryPath);
-    console.log('Entry文件存在:', require('fs').existsSync(entryPath));
-    console.log('TSConfig路径:', tsconfigPath);
-    console.log('TSConfig存在:', require('fs').existsSync(tsconfigPath));
-    console.log('项目根目录:', projectRootPath);
-    console.log('项目根目录存在:', require('fs').existsSync(projectRootPath));
-    console.log('================================');
+    const langsmithApiKey = ssm.StringParameter.fromStringParameterName(
+      this,
+      'LangSmithApiKeyParameter',
+      'LANGSMITH_API_KEY'   // 参数的名字
+    );
+
+    const claudeApiKey = ssm.StringParameter.fromStringParameterName(
+      this,
+      'ClaudeApiKeyParameter',
+      'CLAUDE_API_KEY'   // Claude API key 参数名
+    );
+
+    const agentApiKey = ssm.StringParameter.fromStringParameterName(
+      this,
+      'AgentApiKeyParameter',
+      'AGENT_API_KEY'   // Agent API key 参数名
+    );
 
     this.agentFunction = new NodejsFunction(this, 'AgentFunction', {
       functionName: 'dispatch-agent-react-agent-v2',
       description: 'React Agent for handling general service inquiries and bookings',
 
-      // 入口文件：建议用 .ts；如果你现在是 .js 也可以，改成 .js 即可
       entry: entryPath,
-      handler: 'handler',                       // 源码里要导出同名的 handler
+      handler: 'handler',
 
       runtime: lambda.Runtime.NODEJS_20_X,
       architecture: lambda.Architecture.ARM_64,
       memorySize: 1024,
       timeout: cdk.Duration.minutes(5),
 
-      // 原有网络与权限保持
       vpc,
-      vpcSubnets: { subnets: vpc.privateSubnets },
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS  // Use subnets with NAT Gateway access
+      },
       securityGroups: [securityGroup],
       role: agentLambdaExecutionRole,
 
@@ -270,13 +208,20 @@ export class AgentLambdaStack extends cdk.Stack {
 
         // Bedrock
         BEDROCK_AWS_REGION: this.region,
-        PRIMARY_MODEL: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+        PRIMARY_MODEL: 'mistral.mixtral-8x7b-instruct-v0:1',
         FALLBACK_MODEL: 'anthropic.claude-3-haiku-20240307-v1:0',
 
         // LangSmith
         LANGSMITH_PROJECT: 'dispatch-agent-react-agent',
         LANGSMITH_TRACING: 'true',
-        LANGSMITH_API_KEY_PARAM: langsmithApiKeyParamName,
+        LANGSMITH_API_KEY: langsmithApiKey.stringValue,
+
+        // Claude API
+        ANTHROPIC_API_KEY: claudeApiKey.stringValue,
+        USE_CLAUDE_API: 'true', // Set to 'true' to use Claude API instead of Bedrock
+
+        // API Key for authentication
+        AGENT_API_KEY: agentApiKey.stringValue,
 
         // Agent
         AGENT_MAX_ITERATIONS: '10',

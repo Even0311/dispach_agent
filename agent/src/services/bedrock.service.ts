@@ -29,7 +29,7 @@ export class BedrockService {
   constructor(config?: Partial<BedrockConfig>) {
     this.config = {
       region: process.env.BEDROCK_REGION || 'ap-southeast-2',
-      primaryModel: process.env.PRIMARY_MODEL || 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+      primaryModel: process.env.PRIMARY_MODEL || 'mistral.mixtral-8x7b-instruct-v0:1',
       fastModel: process.env.FAST_MODEL || 'anthropic.claude-3-haiku-20240307-v1:0',
       maxTokens: parseInt(process.env.MAX_TOKENS || '4096'),
       temperature: parseFloat(process.env.TEMPERATURE || '0.7'),

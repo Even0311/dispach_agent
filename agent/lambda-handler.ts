@@ -110,6 +110,36 @@ const createResponse = (
 };
 
 /**
+ * Validate API key from request headers
+ */
+const validateApiKey = (event: LambdaFunctionURLEvent): boolean => {
+  const expectedApiKey = process.env.AGENT_API_KEY;
+
+  if (!expectedApiKey) {
+    console.warn('AGENT_API_KEY environment variable not set');
+    return false;
+  }
+
+  // Check for API key in various header formats
+  const apiKey = event.headers?.['x-api-key'] ||
+                 event.headers?.['X-API-Key'] ||
+                 event.headers?.['authorization']?.replace(/^Bearer\s+/i, '') ||
+                 event.headers?.['Authorization']?.replace(/^Bearer\s+/i, '');
+
+  if (!apiKey) {
+    console.warn('No API key provided in request headers');
+    return false;
+  }
+
+  if (apiKey !== expectedApiKey) {
+    console.warn('Invalid API key provided');
+    return false;
+  }
+
+  return true;
+};
+
+/**
  * Validate incoming agent request
  */
 const validateRequest = (body: any): AgentRequest | null => {
@@ -162,6 +192,16 @@ export const handler = async (
     if (event.requestContext.http.method === 'OPTIONS') {
       console.log(`[${requestId}] Handling CORS preflight request`);
       return createResponse(200, { message: 'CORS preflight successful' });
+    }
+
+    // Validate API key for all non-OPTIONS requests
+    if (!validateApiKey(event)) {
+      console.warn(`[${requestId}] Unauthorized request - invalid or missing API key`);
+      return createResponse(401, {
+        error: 'Unauthorized',
+        message: 'Valid API key required. Please include API key in x-api-key header or Authorization header.',
+        request_id: requestId,
+      });
     }
 
     // Handle health check requests

@@ -1,9 +1,9 @@
 import { BedrockChat } from "@langchain/community/chat_models/bedrock";
+import { ClaudeAPIChat } from '../chat-models/claude-api';
 import { StateGraph, END, START, Annotation } from "@langchain/langgraph";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { BaseMessage, HumanMessage, AIMessage, SystemMessage } from "@langchain/core/messages";
 import { RunnableConfig, Runnable } from "@langchain/core/runnables";
-import { LangChainTracer } from "@langchain/core/tracers/tracer_langchain";
 import { electricianTools } from './tools/electrician-service-tool';
 import { GENERAL_SYSTEM_PROMPT } from './prompts';
 import { AgentState, AgentRequest, AgentResponse, AgentStep } from './types';
@@ -18,15 +18,39 @@ export class GeneralServiceReactAgent {
   constructor() {
     this.tools = electricianTools;
     this.toolNode = new ToolNode(this.tools);
+
+    // Check LangSmith API key availability
+    const langsmithApiKey = process.env.LANGSMITH_API_KEY;
+    if (langsmithApiKey) {
+      console.log(`LangSmith API key detected: ${langsmithApiKey.substring(0, 8)}...`);
+    } else {
+      console.log('LangSmith API key not found in environment variables');
+    }
+
     this.initializeModel();
     this.buildWorkflow();
   }
 
   private initializeModel() {
-    let model: BedrockChat = new BedrockChat({
-      model: process.env.PRIMARY_MODEL || 'anthropic.claude-3-5-sonnet-20241022-v2:0',
-      region: process.env.BEDROCK_AWS_REGION || 'ap-southeast-2'
-    });
+    // Check if we should use Claude API or Bedrock
+    const useClaudeAPI = process.env.USE_CLAUDE_API === 'true' || process.env.ANTHROPIC_API_KEY;
+
+    let model: BedrockChat | ClaudeAPIChat;
+
+    if (useClaudeAPI && process.env.ANTHROPIC_API_KEY) {
+      console.log('Using Claude API directly');
+      model = new ClaudeAPIChat({
+        model: 'claude-3-5-sonnet-20241022',
+        maxTokens: 4096,
+        apiKey: process.env.ANTHROPIC_API_KEY
+      });
+    } else {
+      console.log('Using Bedrock with model:', process.env.PRIMARY_MODEL);
+      model = new BedrockChat({
+        model: process.env.PRIMARY_MODEL || 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+        region: process.env.BEDROCK_AWS_REGION || 'ap-southeast-2'
+      });
+    }
 
     // Bind tools to the model
     this.modelRunnable = model.bindTools(electricianTools);
@@ -114,39 +138,12 @@ export class GeneralServiceReactAgent {
     return "end";
   }
 
-  public async execute(request: AgentRequest, langsmithApiKey?: string): Promise<AgentResponse> {
+  public async execute(request: AgentRequest): Promise<AgentResponse> {
     const startTime = Date.now();
     const steps: AgentStep[] = [];
     const sessionId = request.session_id || `session_${Date.now()}`;
 
     try {
-      // Initialize tracer for LangSmith (only if API key is available)
-      let tracer = null;
-      const apiKey = langsmithApiKey || process.env.LANGCHAIN_API_KEY;
-
-      if (apiKey && apiKey !== 'placeholder-key') {
-        try {
-          // Temporarily set the API key for this execution
-          const originalApiKey = process.env.LANGCHAIN_API_KEY;
-          process.env.LANGCHAIN_API_KEY = apiKey;
-
-          tracer = new LangChainTracer({
-            projectName: process.env.LANGSMITH_PROJECT || "dispatch-agent-react-agent"
-          });
-          console.log('LangSmith tracer initialized successfully with provided API key');
-
-          // Restore original API key
-          if (originalApiKey) {
-            process.env.LANGCHAIN_API_KEY = originalApiKey;
-          }
-        } catch (error) {
-          console.warn('Failed to initialize LangSmith tracer:', error);
-          tracer = null;
-        }
-      } else {
-        console.log('LangSmith API key not available, skipping tracing');
-      }
-
       // Create initial state
       const initialState = {
         messages: [new HumanMessage({ content: request.query })],
@@ -156,9 +153,8 @@ export class GeneralServiceReactAgent {
         intermediate_steps: [],
       };
 
-      // Execute the workflow with tracing (if available)
+      // Execute the workflow with LangSmith auto-tracing
       const config: RunnableConfig = {
-        callbacks: tracer ? [tracer] : [],
         metadata: {
           session_id: sessionId,
           user_query: request.query,
